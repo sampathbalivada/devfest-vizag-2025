@@ -25,7 +25,7 @@ import { AgendaPromoSection } from "@/components/agenda-promo-section";
 import { WorkshopsSection } from "@/components/workshops-section";
 
 const timelines = [
-  { event: "Early Bird Registration", date: "20th September - 30th September" },
+  { event: "Early Bird Registration", date: "October 14" },
   { event: "Skill Pass Applications Close", date: "30th September" },
   { event: "Skill Pass Ticket Rollout", date: "5th October" },
   { event: "General Entry Tickets", date: "1st October - 31st October" },
