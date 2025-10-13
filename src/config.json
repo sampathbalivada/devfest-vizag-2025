@@ -3,7 +3,7 @@
     "home": true,
     "agenda": true,
     "gallery": true,
-    "volunteer": true,
+    "volunteer": false,
     "sessions": false,
     "speakers": false,
     "sponsors": false,
