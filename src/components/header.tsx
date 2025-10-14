@@ -17,7 +17,7 @@ const allNavLinks = [
   { key: 'home', href: '/', label: 'Home' },
   { key: 'agenda', href: '/agenda', label: 'Agenda' },
   { key: 'gallery', href: '/gallery', label: 'Gallery' },
-  { key: 'poc', href: '/poc', label: 'POC' },
+  { key: 'poc', href: '/poc', label: 'Poc' },
   { key: 'volunteer', href: '/volunteer', label: 'Volunteer' },
   { key: 'sessions', href: '/sessions', label: 'Session Ideas' },
   { key: 'speakers', href: '/speakers', label: 'Speakers' },
