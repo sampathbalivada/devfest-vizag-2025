@@ -3,6 +3,7 @@
     "home": true,
     "agenda": true,
     "gallery": true,
+    "poc": true,
     "volunteer": false,
     "sessions": false,
     "speakers": false,
@@ -14,6 +15,6 @@
     "community": "https://gdg.community.dev/gdg-vizag",
     "twitter": "https://twitter.com/gdgvizag",
     "linkedin": "https://linkedin.com/company/gdg-vizag",
-    "youtube": "https://youtube.com/c/GDGVizag"
+    "youtube": "https://www.youtube.com/@gdgvizag"
   }
 }

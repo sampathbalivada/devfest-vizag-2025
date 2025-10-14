@@ -26,11 +26,9 @@ import { WorkshopsSection } from "@/components/workshops-section";
 
 const timelines = [
   { event: "Early Bird Registration", date: "October 14" },
-  { event: "Skill Pass Applications Close", date: "30th September" },
-  { event: "Skill Pass Ticket Rollout", date: "5th October" },
-  { event: "General Entry Tickets", date: "1st October - 31st October" },
-  { event: "Workshop Agenda Release", date: "1st October" },
-  { event: "Final Agenda & Speaker List Release", date: "1st October" },
+  { event: "General Entry Tickets", date: "October 15th - 31st October" },
+  { event: "Workshop Agenda Release", date: "1 week before event" },
+  { event: "Final Agenda & Speaker List Release", date: "1 week before event" }
 ];
 
 
