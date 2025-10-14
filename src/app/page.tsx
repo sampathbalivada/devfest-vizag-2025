@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,10 @@ import { AgendaPromoSection } from "@/components/agenda-promo-section";
 import { WorkshopsSection } from "@/components/workshops-section";
 
 const timelines = [
-  { event: "Early Bird Registration", date: "20th September - 30th September" },
-  { event: "Skill Pass Applications Close", date: "30th September" },
-  { event: "Skill Pass Ticket Rollout", date: "5th October" },
-  { event: "General Entry Tickets", date: "1st October - 31st October" },
+  { event: "Early Bird Registration", date: "October 14" },
+  { event: "General Entry Tickets", date: "October 15th - 31st October" },
   { event: "Workshop Agenda Release", date: "1st October" },
-  { event: "Final Agenda & Speaker List Release", date: "1st October" },
+  { event: "Final Agenda & Speaker List Release", date: "1 week before event" }
 ];
 
 
@@ -134,7 +133,7 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <iframe 
-              src="https://konfhub.com/widget/devfest-vizag-2025?desc=true&secondaryBg=F7F7F7&ticketBg=F7F7F7&borderCl=F7F7F7&bg=FFFFFF&fontColor=1e1f24&ticketCl=1e1f24&btnColor=002E6E&fontFamily=Nunito&borderRadius=12&widget_type=standard&tickets=56817%2C57853%2C57856%2C57858&ticketId=56817%7C1%3B57853%7C1%3B57856%7C1%3B57858%7C1" 
+              src="https://konfhub.com/widget/devfest-vizag-2025?desc=true&secondaryBg=F7F7F7&ticketBg=F7F7F7&borderCl=F7F7F7&bg=FFFFFF&fontColor=1e1f24&ticketCl=1e1f24&btnColor=002E6E&fontFamily=Nunito&borderRadius=12&widget_type=standard" 
               id="konfhub-widget" 
               title="Register for DevFest Vizag 2025" 
               width="100%" 
