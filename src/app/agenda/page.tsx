@@ -1,3 +1,4 @@
+
 import { getAgenda } from '@/app/agenda/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +42,7 @@ export default async function AgendaPage() {
     <div className="container mx-auto py-12 px-4 animate-fade-in-up">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
-          Event Agenda
+          Event Tentative Agenda
         </h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
           Plan your day with our detailed schedule. Sessions for every interest!
