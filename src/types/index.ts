@@ -92,7 +92,7 @@ export interface AgendaItem {
   startTime: string; // HH:MM
   endTime: string; // HH:MM
   category?: AgendaCategory;
-  difficulty?: Difficulty;
+  difficulty?: Difficulty[];
 }
 
 export interface Announcement {

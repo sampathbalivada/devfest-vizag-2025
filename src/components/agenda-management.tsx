@@ -20,6 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Loader2, PlusCircle, MoreHorizontal, Pencil, Trash2, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from './ui/checkbox';
 
 interface AgendaManagementProps {
   agendaItems: AgendaItem[];
@@ -36,7 +37,7 @@ const AgendaItemSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:MM format.'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'End time must be in HH:MM format.'),
   category: z.string().optional(),
-  difficulty: z.string().optional(),
+  difficulty: z.array(z.string()).optional(),
 }).refine(data => data.endTime > data.startTime, {
   message: "End time must be after start time.",
   path: ["endTime"],
@@ -70,23 +71,21 @@ function AgendaForm({
 }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const defaultValues = item 
-    ? { ...item, trackId: item.trackId, category: item.category || 'none', difficulty: item.difficulty || 'none' } 
-    : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none', difficulty: 'none' };
+  
+  const defaultValues = useMemo(() => item 
+    ? { ...item, category: item.category || 'none', difficulty: item.difficulty || [] } 
+    : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none', difficulty: [] }, [item]);
   
   const form = useForm<AgendaFormValues>({
     resolver: zodResolver(AgendaItemSchema),
-    defaultValues: defaultValues,
+    defaultValues,
   });
   
   useEffect(() => {
     if(isOpen) {
-       const resetValues = item 
-        ? { ...item, trackId: item.trackId, category: item.category || 'none', difficulty: item.difficulty || 'none' } 
-        : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none', difficulty: 'none' };
-      form.reset(resetValues);
+      form.reset(defaultValues);
     }
-  }, [item, isOpen, form]);
+  }, [item, isOpen, form, defaultValues]);
 
 
   const onSubmit = async (values: AgendaFormValues) => {
@@ -97,11 +96,13 @@ function AgendaForm({
     }
     
     Object.entries(values).forEach(([key, value]) => {
-      if (value) {
-        if ((key === 'category' || key === 'difficulty') && value === 'none') {
+      if (key === 'difficulty' && Array.isArray(value)) {
+        value.forEach(d => formData.append('difficulty', d));
+      } else if (value) {
+        if (key === 'category' && value === 'none') {
             // Don't append if it's the 'none' placeholder
         } else {
-            formData.append(key, value);
+            formData.append(key, String(value));
         }
       }
     });
@@ -128,7 +129,7 @@ function AgendaForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField control={form.control} name="title" render={({ field }) => ( <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="speaker" render={({ field }) => ( <FormItem><FormLabel>Speaker</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="trackId"
@@ -178,32 +179,49 @@ function AgendaForm({
                     </FormItem>
                   )}
                 />
-                 <FormField
-                  control={form.control}
-                  name="difficulty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Difficulty</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {difficultyLevels.map(level => (
-                            <SelectItem key={level} value={level}>
-                              {level}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
             </div>
+            <FormField
+              control={form.control}
+              name="difficulty"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Difficulty</FormLabel>
+                   <div className="flex items-center space-x-4">
+                    {difficultyLevels.map((level) => (
+                      <FormField
+                        key={level}
+                        control={form.control}
+                        name="difficulty"
+                        render={({ field }) => {
+                          return (
+                            <FormItem key={level} className="flex flex-row items-start space-x-2 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(level)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), level])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== level
+                                          )
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {level}
+                              </FormLabel>
+                            </FormItem>
+                          )
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="startTime" render={({ field }) => ( <FormItem><FormLabel>Start Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -361,7 +379,7 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
                                               <div className="font-medium">{item.title}</div>
                                               <div className="flex flex-wrap items-center gap-1 mt-1">
                                                 {item.category && <Badge variant="secondary">{item.category}</Badge>}
-                                                {item.difficulty && <DifficultyBadge difficulty={item.difficulty} />}
+                                                {item.difficulty?.map(d => <DifficultyBadge key={d} difficulty={d} />)}
                                               </div>
                                             </TableCell>
                                             <TableCell>{item.speaker || 'N/A'}</TableCell>

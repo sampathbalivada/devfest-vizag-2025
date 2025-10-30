@@ -16,7 +16,7 @@ const AgendaItemSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:MM format.'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'End time must be in HH:MM format.'),
   category: z.enum(agendaCategories).optional(),
-  difficulty: z.enum(difficultyLevels).optional(),
+  difficulty: z.array(z.enum(difficultyLevels)).optional(),
 }).refine(data => data.endTime > data.startTime, {
   message: "End time must be after start time.",
   path: ["endTime"],
@@ -44,7 +44,15 @@ export async function manageAgendaItem(formData: FormData, token: string) {
     return { error: 'Unauthorized' };
   }
 
-  const rawData = Object.fromEntries(formData.entries());
+  const rawData: {[key: string]: any} = Object.fromEntries(formData.entries());
+  // Handle multiple difficulties from FormData
+  const difficulties = formData.getAll('difficulty');
+  if(difficulties.length > 0) {
+      rawData.difficulty = difficulties;
+  } else {
+      delete rawData.difficulty;
+  }
+
   const validation = AgendaItemSchema.safeParse(rawData);
 
   if (!validation.success) {
