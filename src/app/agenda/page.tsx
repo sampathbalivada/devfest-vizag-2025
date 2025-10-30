@@ -28,11 +28,20 @@ function AgendaCard({ item }: { item: AgendaItem }) {
 
   return (
     <div className="py-4">
-      <div className="flex items-start gap-3 sm:gap-4">
-        <div className="w-16 sm:w-24 text-right text-base sm:text-lg font-bold text-primary shrink-0">
+      <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+        {/* Desktop time */}
+        <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
           {item.startTime}
         </div>
         <div className="flex-1 min-w-0">
+           {/* Mobile time/duration */}
+           <div className="sm:hidden flex items-center gap-4 text-sm mb-2">
+                <span className="font-bold text-primary">{item.startTime}</span>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span>{getDuration(item.startTime, item.endTime)}</span>
+                </div>
+            </div>
           {hasDetails ? (
              <Accordion type="single" collapsible>
                 <AccordionItem value={item.id} className="border-none">
@@ -59,7 +68,8 @@ function AgendaCard({ item }: { item: AgendaItem }) {
             </div>
           )}
         </div>
-        <div className="w-14 sm:w-20 text-sm text-muted-foreground text-right shrink-0">
+        {/* Desktop duration */}
+        <div className="hidden sm:block w-20 text-sm text-muted-foreground text-right shrink-0">
           <div className="flex items-center justify-end gap-1">
             <Clock className="h-3 w-3" />
             <span>{getDuration(item.startTime, item.endTime)}</span>
