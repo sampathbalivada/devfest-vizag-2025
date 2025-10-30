@@ -36,6 +36,8 @@ function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
 function AgendaCard({ item }: { item: AgendaItem }) {
   const hasDetails = item.speaker || item.description;
   const duration = getDuration(item.startTime, item.endTime);
+  const difficulties = Array.isArray(item.difficulty) ? item.difficulty : (item.difficulty ? [item.difficulty] : []);
+
 
   return (
     <div className="py-4">
@@ -69,7 +71,7 @@ function AgendaCard({ item }: { item: AgendaItem }) {
                           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
                               {item.speaker && <span className="font-medium">{item.speaker}</span>}
                               {item.category && <Badge variant="outline">{item.category}</Badge>}
-                              {item.difficulty?.map((d) => <DifficultyBadge key={d} difficulty={d} />)}
+                              {difficulties.map((d) => <DifficultyBadge key={d} difficulty={d} />)}
                           </div>
                       </div>
                   </div>
@@ -112,7 +114,7 @@ function AgendaCard({ item }: { item: AgendaItem }) {
                     <p className="font-bold">{item.title}</p>
                     <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground mt-1">
                         {item.category && <Badge variant="outline">{item.category}</Badge>}
-                        {item.difficulty?.map((d) => <DifficultyBadge key={d} difficulty={d} />)}
+                        {difficulties.map((d) => <DifficultyBadge key={d} difficulty={d} />)}
                     </div>
                 </div>
             </div>
