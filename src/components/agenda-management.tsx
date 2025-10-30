@@ -61,8 +61,16 @@ function AgendaForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<AgendaFormValues>({
     resolver: zodResolver(AgendaItemSchema),
-    defaultValues: item ? { ...item, trackId: item.trackId } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00' },
+    defaultValues: item ? { ...item, trackId: item.trackId } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: undefined },
   });
+  
+  // When dialog opens, reset form with new `item` props
+  useState(() => {
+    if(isOpen) {
+      form.reset(item ? { ...item, trackId: item.trackId } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: undefined });
+    }
+  });
+
 
   const onSubmit = async (values: AgendaFormValues) => {
     setIsSubmitting(true);
@@ -136,6 +144,7 @@ function AgendaForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                           <SelectItem value="">None</SelectItem>
                           {agendaCategories.map(category => (
                             <SelectItem key={category} value={category}>
                               {category}
@@ -266,26 +275,33 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
 
   const groupedItems = useMemo(() => {
     const groups: { [key: string]: AgendaItem[] } = {};
+    const trackIdToName: Record<string, string> = tracks.reduce((acc, track) => {
+      acc[track.id] = track.name;
+      return acc;
+    }, {} as Record<string, string>);
+
     agendaItems.forEach(item => {
-        const trackKey = item.trackName || 'Unassigned';
-        if (!groups[trackKey]) {
-            groups[trackKey] = [];
+        const trackName = trackIdToName[item.trackId] || 'Unassigned';
+        if (!groups[trackName]) {
+            groups[trackName] = [];
         }
-        groups[trackKey].push(item);
+        groups[trackName].push(item);
     });
 
     Object.values(groups).forEach(group => {
         group.sort((a, b) => a.startTime.localeCompare(b.startTime));
     });
 
-    return Object.entries(groups).sort((a, b) => {
-        const trackA = tracks.find(t => t.name === a[0]);
-        const trackB = tracks.find(t => t.name === b[0]);
-        const orderA = trackA?.order ?? Infinity;
-        const orderB = trackB?.order ?? Infinity;
-        if (orderA !== orderB) return orderA - orderB;
-        return a[0].localeCompare(b[0]);
-    });
+    const sortedTrackNames = tracks
+      .sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.name.localeCompare(b.name))
+      .map(t => t.name);
+
+    const sortedGroups = sortedTrackNames.map(name => [name, groups[name] || []]);
+    if (groups['Unassigned']) {
+      sortedGroups.push(['Unassigned', groups['Unassigned']]);
+    }
+    
+    return sortedGroups;
   }, [agendaItems, tracks]);
 
 
@@ -297,8 +313,8 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
             <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button>
         </div>
         
-        {groupedItems.length > 0 ? (
-            groupedItems.map(([trackName, items]) => (
+        {groupedItems.length > 0 && groupedItems.some(([, items]) => items.length > 0) ? (
+            groupedItems.map(([trackName, items]) => items.length > 0 && (
                 <Card key={trackName}>
                     <CardHeader>
                         <CardTitle>{trackName}</CardTitle>

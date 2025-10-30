@@ -1,8 +1,9 @@
 
+
 import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Minus } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import type { AgendaItem } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -108,7 +109,6 @@ export default async function AgendaPage() {
                     <CardContent className="divide-y">
                         {allAgendaItems
                           .filter(item => item.trackId === track.id)
-                          .sort((a, b) => a.startTime.localeCompare(b.startTime))
                           .map(item => (
                             <AgendaCard key={item.id} item={item} />
                         ))}
