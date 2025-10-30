@@ -34,6 +34,7 @@ interface AdminDashboardProps {
   initialAnnouncements: Announcement[];
   currentUserUid: string;
   token: string;
+  onDataRefresh: () => void;
 }
 
 export default function AdminDashboard({ 
@@ -45,7 +46,8 @@ export default function AdminDashboard({
   initialAgendaTracks,
   initialAnnouncements,
   currentUserUid, 
-  token 
+  token,
+  onDataRefresh,
 }: AdminDashboardProps) {
   const [jobs, setJobs] = useState<Job[]>(initialJobs);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -65,8 +67,8 @@ export default function AdminDashboard({
   const handleDelete = async (jobId: string) => {
     const result = await deleteJob(jobId, token);
     if (result.success) {
-      setJobs(jobs.filter((job) => job.id !== jobId));
       toast({ title: "Success", description: result.success });
+      onDataRefresh();
     } else {
       toast({ variant: 'destructive', title: "Error", description: result.error });
     }
@@ -77,28 +79,15 @@ export default function AdminDashboard({
     const result = await updateJobStatus(job.id, newStatus, token);
 
     if (result.success) {
-      setJobs(currentJobs => currentJobs.map(j => 
-        j.id === job.id ? { ...j, status: newStatus } : j
-      ));
       toast({ title: "Success", description: result.success });
+      onDataRefresh();
     } else {
       toast({ variant: 'destructive', title: "Error", description: result.error });
     }
   };
 
-  const onFormSubmit = (submittedJob: Job) => {
-    const jobExists = jobs.some((j) => j.id === submittedJob.id);
-    let newJobs;
-    if (jobExists) {
-      // Update existing job
-      newJobs = jobs.map((j) => (j.id === submittedJob.id ? submittedJob : j));
-    } else {
-      // Add new job
-      newJobs = [...jobs, submittedJob];
-    }
-    // Re-sort the list by title to maintain consistency with initial fetch
-    newJobs.sort((a, b) => a.title.localeCompare(b.title));
-    setJobs(newJobs);
+  const onFormSubmit = () => {
+    onDataRefresh();
     setSelectedJob(null);
   };
 
@@ -137,7 +126,7 @@ export default function AdminDashboard({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {jobs.map((job) => (
+              {initialJobs.map((job) => (
                 <TableRow key={job.id}>
                   <TableCell className="font-medium">{job.title}</TableCell>
                   <TableCell>
@@ -215,15 +204,17 @@ export default function AdminDashboard({
       </TabsContent>
       <TabsContent value="agenda" className="mt-6">
         <AgendaManagement 
-          initialAgendaItems={initialAgenda} 
-          initialTracks={initialAgendaTracks}
+          agendaItems={initialAgenda} 
+          tracks={initialAgendaTracks}
           token={token} 
+          onRefresh={onDataRefresh}
         />
       </TabsContent>
       <TabsContent value="announcements" className="mt-6">
         <AnnouncementManagement
           initialAnnouncements={initialAnnouncements}
           token={token}
+          onRefresh={onDataRefresh}
         />
       </TabsContent>
       <TabsContent value="admins" className="mt-6">
@@ -231,6 +222,7 @@ export default function AdminDashboard({
           initialAdmins={initialAdmins}
           token={token}
           currentUserUid={currentUserUid}
+          onRefresh={onDataRefresh}
         />
       </TabsContent>
     </Tabs>

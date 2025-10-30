@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Announcement } from '@/types';
-import { manageAnnouncement, deleteAnnouncement, getAnnouncements } from '@/app/announcements/actions';
+import { manageAnnouncement, deleteAnnouncement } from '@/app/announcements/actions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
@@ -21,6 +21,7 @@ import { Label } from './ui/label';
 interface AnnouncementManagementProps {
   initialAnnouncements: Announcement[];
   token: string;
+  onRefresh: () => void;
 }
 
 const AnnouncementSchema = z.object({
@@ -111,17 +112,11 @@ function AnnouncementForm({
   );
 }
 
-export function AnnouncementManagement({ initialAnnouncements, token }: AnnouncementManagementProps) {
-  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
+export function AnnouncementManagement({ initialAnnouncements, token, onRefresh }: AnnouncementManagementProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selected, setSelected] = useState<Announcement | null>(null);
   const { toast } = useToast();
   
-  const handleRefresh = async () => {
-    const freshAnnouncements = await getAnnouncements();
-    setAnnouncements(freshAnnouncements);
-  };
-
   const handleAdd = () => {
     setSelected(null);
     setIsFormOpen(true);
@@ -136,7 +131,7 @@ export function AnnouncementManagement({ initialAnnouncements, token }: Announce
     const result = await deleteAnnouncement(id, token);
     if (result.success) {
       toast({ title: 'Success', description: 'Announcement deleted.' });
-      handleRefresh();
+      onRefresh();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
@@ -151,7 +146,7 @@ export function AnnouncementManagement({ initialAnnouncements, token }: Announce
         </Button>
       </div>
       <div className="space-y-4">
-        {announcements.map(ann => (
+        {initialAnnouncements.map(ann => (
           <Card key={ann.id}>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
@@ -194,7 +189,7 @@ export function AnnouncementManagement({ initialAnnouncements, token }: Announce
             </CardFooter>
           </Card>
         ))}
-        {announcements.length === 0 && (
+        {initialAnnouncements.length === 0 && (
            <div className="text-center py-16 border rounded-lg">
                 <p className="text-muted-foreground text-lg">No announcements have been posted yet.</p>
             </div>
@@ -207,7 +202,7 @@ export function AnnouncementManagement({ initialAnnouncements, token }: Announce
           setIsOpen={setIsFormOpen}
           announcement={selected}
           token={token}
-          onSave={handleRefresh}
+          onSave={onRefresh}
         />
       )}
     </div>
