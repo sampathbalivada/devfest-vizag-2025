@@ -1,3 +1,4 @@
+
 import type { Timestamp } from "firebase-admin/firestore";
 
 export interface Job {
@@ -72,6 +73,7 @@ export interface Task {
 export interface AgendaTrack {
   id: string;
   name: string;
+  order?: number;
 }
 
 export const agendaCategories = ['Cloud', 'AI', 'Web', 'Mobile', 'Firebase', 'Entrepreneurship', 'Other'] as const;

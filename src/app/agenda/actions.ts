@@ -1,3 +1,4 @@
+
 'use server';
 
 import { adminDb } from '@/lib/firebase-admin';
@@ -23,6 +24,7 @@ const AgendaItemSchema = z.object({
 const AgendaTrackSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Track name cannot be empty.'),
+  order: z.coerce.number().optional(),
 });
 
 export async function getAgenda(): Promise<AgendaItem[]> {
@@ -95,7 +97,7 @@ export async function deleteAgendaItem(id: string, token: string) {
 // Track Actions
 export async function getAgendaTracks(): Promise<AgendaTrack[]> {
     try {
-        const snapshot = await adminDb.collection('agendaTracks').orderBy('name').get();
+        const snapshot = await adminDb.collection('agendaTracks').orderBy('order').orderBy('name').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AgendaTrack));
     } catch (error) {
         console.error("Error fetching agenda tracks: ", error);
@@ -114,7 +116,7 @@ export async function manageAgendaTrack(formData: FormData, token: string) {
         return { error: 'Invalid data', details: validation.error.flatten().fieldErrors };
     }
     
-    const { id, name } = validation.data;
+    const { id, ...data } = validation.data;
 
     try {
         if (id) {
@@ -122,17 +124,23 @@ export async function manageAgendaTrack(formData: FormData, token: string) {
             const trackRef = adminDb.collection('agendaTracks').doc(id);
             const batch = adminDb.batch();
             
-            batch.update(trackRef, { name });
+            batch.update(trackRef, { name: data.name, order: data.order ?? 100 });
 
-            const itemsToUpdateSnapshot = await adminDb.collection('agenda').where('trackId', '==', id).get();
-            itemsToUpdateSnapshot.docs.forEach(doc => {
-                batch.update(doc.ref, { trackName: name });
-            });
+            if (data.name) {
+              const itemsToUpdateSnapshot = await adminDb.collection('agenda').where('trackId', '==', id).get();
+              itemsToUpdateSnapshot.docs.forEach(doc => {
+                  batch.update(doc.ref, { trackName: data.name });
+              });
+            }
             
             await batch.commit();
         } else {
+             const trackCount = (await adminDb.collection('agendaTracks').count().get()).data().count;
             // Add new track
-            await adminDb.collection('agendaTracks').add({ name });
+            await adminDb.collection('agendaTracks').add({ 
+              name: data.name, 
+              order: data.order ?? (trackCount + 1) * 10 
+            });
         }
         revalidatePath('/admin');
         revalidatePath('/agenda');

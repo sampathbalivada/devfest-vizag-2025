@@ -1,3 +1,4 @@
+
 import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,19 +73,7 @@ function AgendaCard({ item }: { item: AgendaItem }) {
 
 export default async function AgendaPage() {
   const allAgendaItems = await getAgenda();
-  const allTracks = await getAgendaTracks();
-
-  const tabOrder = ['Main stage', 'Experts hall', 'Career hall', 'Workshops', 'codelabs'];
-  
-  const sortedTracks = [...allTracks].sort((a, b) => {
-    const indexA = tabOrder.indexOf(a.name);
-    const indexB = tabOrder.indexOf(b.name);
-
-    if (indexA === -1 && indexB === -1) return a.name.localeCompare(b.name);
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
-    return indexA - indexB;
-  });
+  const sortedTracks = await getAgendaTracks();
 
   const defaultTab = sortedTracks.length > 0 ? sortedTracks[0].id : '';
 

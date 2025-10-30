@@ -167,6 +167,7 @@ function AgendaForm({
 const TrackSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Track name cannot be empty.'),
+  order: z.coerce.number().optional(),
 });
 type TrackFormValues = z.infer<typeof TrackSchema>;
 
@@ -178,8 +179,9 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
   const [editingTrack, setEditingTrack] = useState<AgendaTrack | null>(null);
   const { toast } = useToast();
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<TrackFormValues>({
+  const form = useForm<TrackFormValues>({
     resolver: zodResolver(TrackSchema),
+    defaultValues: { name: '', order: 100 }
   });
 
   const handleRefresh = async () => {
@@ -211,19 +213,41 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
   const onManageTrack = async (data: TrackFormValues) => {
     const formData = new FormData();
     formData.append('name', data.name);
+    if (data.order !== undefined) {
+      formData.append('order', data.order.toString());
+    }
     if (editingTrack?.id) {
         formData.append('id', editingTrack.id);
     }
     const result = await manageAgendaTrack(formData, token);
     if (result.success) {
         toast({ title: 'Success', description: `Track ${editingTrack ? 'updated' : 'created'}.` });
-        reset({ name: '' });
+        form.reset({ name: '', order: 100 });
         setEditingTrack(null);
         handleRefresh();
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
   };
+  
+  const onUpdateTrackOrder = async (trackId: string, order: number) => {
+    const track = tracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    const formData = new FormData();
+    formData.append('id', trackId);
+    formData.append('name', track.name);
+    formData.append('order', order.toString());
+
+    const result = await manageAgendaTrack(formData, token);
+     if (result.success) {
+        toast({ title: 'Success', description: `Track order updated.` });
+        handleRefresh();
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+  }
+
 
   const onDeleteTrack = async (id: string) => {
     const result = await deleteAgendaTrack(id, token);
@@ -237,7 +261,7 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
 
   const handleEditTrack = (track: AgendaTrack) => {
     setEditingTrack(track);
-    reset({ name: track.name });
+    form.reset({ name: track.name, order: track.order ?? 100 });
   }
 
   const groupedItems = useMemo(() => {
@@ -254,8 +278,15 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
         group.sort((a, b) => a.startTime.localeCompare(b.startTime));
     });
 
-    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [agendaItems]);
+    return Object.entries(groups).sort((a, b) => {
+        const trackA = tracks.find(t => t.name === a[0]);
+        const trackB = tracks.find(t => t.name === b[0]);
+        const orderA = trackA?.order ?? Infinity;
+        const orderB = trackB?.order ?? Infinity;
+        if (orderA !== orderB) return orderA - orderB;
+        return a[0].localeCompare(b[0]);
+    });
+  }, [agendaItems, tracks]);
 
 
   return (
@@ -337,18 +368,28 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
             <CardTitle>{editingTrack ? 'Edit Track' : 'Manage Tracks'}</CardTitle>
         </CardHeader>
         <CardContent>
-            <form onSubmit={handleSubmit(onManageTrack)} className="flex items-start gap-2 mb-4">
-                <div className="flex-grow">
-                    <Input placeholder="Track name..." {...register('name')} />
-                    {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
-                </div>
-                <Button type="submit">{editingTrack ? 'Save' : 'Add'}</Button>
-                {editingTrack && <Button type="button" variant="ghost" onClick={() => { setEditingTrack(null); reset({name: ''});}}>Cancel</Button>}
-            </form>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onManageTrack)} className="flex items-start gap-2 mb-4">
+                    <div className="flex-grow">
+                        <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Track name..." {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    </div>
+                    <Button type="submit">{editingTrack ? 'Save' : 'Add'}</Button>
+                    {editingTrack && <Button type="button" variant="ghost" onClick={() => { setEditingTrack(null); form.reset({name: '', order: 100});}}>Cancel</Button>}
+                </form>
+            </Form>
             <div className="space-y-2">
                 {tracks.map(track => (
                     <div key={track.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
-                        <span className="text-sm font-medium">{track.name}</span>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                type="number"
+                                className="w-16 h-8"
+                                value={track.order ?? ''}
+                                onChange={(e) => setTracks(current => current.map(t => t.id === track.id ? {...t, order: e.target.valueAsNumber} : t))}
+                                onBlur={(e) => onUpdateTrackOrder(track.id, e.target.valueAsNumber)}
+                            />
+                            <span className="text-sm font-medium">{track.name}</span>
+                        </div>
                         <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" onClick={() => handleEditTrack(track)}>
                                 <Pencil className="h-4 w-4" />
@@ -363,7 +404,7 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Delete "{track.name}"?</AlertDialogTitle>
                                         <AlertDialogDescription>This action cannot be undone. You can only delete tracks that are not being used by any agenda session.</AlertDialogDescription>
-                                    </AlertDialogHeader>
+                                    </Aler tDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => onDeleteTrack(track.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
