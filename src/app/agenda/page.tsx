@@ -4,10 +4,11 @@ import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
-import type { AgendaItem } from '@/types';
+import type { AgendaItem, AgendaTrack } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
+export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 function getDuration(startTime: string, endTime: string): string {
@@ -73,8 +74,12 @@ function AgendaCard({ item }: { item: AgendaItem }) {
 
 
 export default async function AgendaPage() {
-  const allAgendaItems = await getAgenda();
-  const sortedTracks = await getAgendaTracks();
+  const [allAgendaItems, unsortedTracks] = await Promise.all([
+    getAgenda(),
+    getAgendaTracks()
+  ]);
+
+  const sortedTracks = [...unsortedTracks].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
   const defaultTab = sortedTracks.length > 0 ? sortedTracks[0].id : '';
 
