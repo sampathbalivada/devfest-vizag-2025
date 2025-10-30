@@ -79,6 +79,9 @@ export interface AgendaTrack {
 export const agendaCategories = ['Cloud', 'AI', 'Web', 'Mobile', 'Firebase', 'Entrepreneurship', 'Other'] as const;
 export type AgendaCategory = (typeof agendaCategories)[number];
 
+export const difficultyLevels = ['Beginners', 'Intermediate', 'Experts'] as const;
+export type Difficulty = (typeof difficultyLevels)[number];
+
 export interface AgendaItem {
   id: string;
   title: string;
@@ -89,6 +92,7 @@ export interface AgendaItem {
   startTime: string; // HH:MM
   endTime: string; // HH:MM
   category?: AgendaCategory;
+  difficulty?: Difficulty;
 }
 
 export interface Announcement {

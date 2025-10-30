@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { AgendaItem, AgendaTrack, agendaCategories } from '@/types';
+import { AgendaItem, AgendaTrack, agendaCategories, difficultyLevels, Difficulty } from '@/types';
 import { manageAgendaItem, deleteAgendaItem, manageAgendaTrack, deleteAgendaTrack } from '@/app/agenda/actions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
@@ -36,12 +36,22 @@ const AgendaItemSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:MM format.'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'End time must be in HH:MM format.'),
   category: z.string().optional(),
+  difficulty: z.string().optional(),
 }).refine(data => data.endTime > data.startTime, {
   message: "End time must be after start time.",
   path: ["endTime"],
 });
 
 type AgendaFormValues = z.infer<typeof AgendaItemSchema>;
+
+function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
+  const styles = {
+    Beginners: 'bg-[hsl(var(--difficulty-beginner))] text-background',
+    Intermediate: 'bg-[hsl(var(--difficulty-intermediate))] text-background',
+    Experts: 'bg-[hsl(var(--difficulty-experts))] text-background',
+  };
+  return <Badge className={styles[difficulty]}>{difficulty}</Badge>;
+}
 
 function AgendaForm({
   isOpen,
@@ -60,14 +70,21 @@ function AgendaForm({
 }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const defaultValues = item 
+    ? { ...item, trackId: item.trackId, category: item.category || 'none', difficulty: item.difficulty || 'none' } 
+    : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none', difficulty: 'none' };
+  
   const form = useForm<AgendaFormValues>({
     resolver: zodResolver(AgendaItemSchema),
-    defaultValues: item ? { ...item, trackId: item.trackId, category: item.category || 'none' } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none' },
+    defaultValues: defaultValues,
   });
   
   useEffect(() => {
     if(isOpen) {
-      form.reset(item ? { ...item, trackId: item.trackId, category: item.category || 'none' } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none' });
+       const resetValues = item 
+        ? { ...item, trackId: item.trackId, category: item.category || 'none', difficulty: item.difficulty || 'none' } 
+        : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none', difficulty: 'none' };
+      form.reset(resetValues);
     }
   }, [item, isOpen, form]);
 
@@ -81,8 +98,8 @@ function AgendaForm({
     
     Object.entries(values).forEach(([key, value]) => {
       if (value) {
-        if (key === 'category' && value === 'none') {
-            // Don't append category if it's 'none'
+        if ((key === 'category' || key === 'difficulty') && value === 'none') {
+            // Don't append if it's the 'none' placeholder
         } else {
             formData.append(key, value);
         }
@@ -102,7 +119,7 @@ function AgendaForm({
   
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{item ? 'Edit Agenda Item' : 'Add Agenda Item'}</DialogTitle>
           <DialogDescription>Fill in the details for the agenda session.</DialogDescription>
@@ -111,7 +128,7 @@ function AgendaForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField control={form.control} name="title" render={({ field }) => ( <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="speaker" render={({ field }) => ( <FormItem><FormLabel>Speaker</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="trackId"
@@ -153,6 +170,31 @@ function AgendaForm({
                           {agendaCategories.map(category => (
                             <SelectItem key={category} value={category}>
                               {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="difficulty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Difficulty</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {difficultyLevels.map(level => (
+                            <SelectItem key={level} value={level}>
+                              {level}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -317,7 +359,10 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
                                             </TableCell>
                                             <TableCell>
                                               <div className="font-medium">{item.title}</div>
-                                              {item.category && <Badge variant="secondary" className="mt-1">{item.category}</Badge>}
+                                              <div className="flex flex-wrap items-center gap-1 mt-1">
+                                                {item.category && <Badge variant="secondary">{item.category}</Badge>}
+                                                {item.difficulty && <DifficultyBadge difficulty={item.difficulty} />}
+                                              </div>
                                             </TableCell>
                                             <TableCell>{item.speaker || 'N/A'}</TableCell>
                                             <TableCell className="text-right">

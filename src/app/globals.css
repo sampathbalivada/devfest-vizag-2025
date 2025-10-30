@@ -41,6 +41,10 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --difficulty-beginner: 142.1 76.2% 36.3%; /* Green */
+    --difficulty-intermediate: 47.9 95.8% 53.1%; /* Yellow */
+    --difficulty-experts: 24.6 95% 53.1%; /* Orange */
   }
   .dark {
     --background: 240 6% 10%;
@@ -75,6 +79,10 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --difficulty-beginner: 142.1 70.2% 42.3%; /* Green */
+    --difficulty-intermediate: 47.9 90.8% 55.1%; /* Yellow */
+    --difficulty-experts: 24.6 90% 55.1%; /* Orange */
   }
 }
 

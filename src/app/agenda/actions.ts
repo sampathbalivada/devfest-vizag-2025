@@ -2,7 +2,7 @@
 'use server';
 
 import { adminDb } from '@/lib/firebase-admin';
-import { AgendaItem, AgendaTrack, agendaCategories } from '@/types';
+import { AgendaItem, AgendaTrack, agendaCategories, difficultyLevels } from '@/types';
 import { z } from 'zod';
 import { isAdmin } from '../volunteer/actions';
 import { revalidatePath } from 'next/cache';
@@ -16,6 +16,7 @@ const AgendaItemSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:MM format.'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'End time must be in HH:MM format.'),
   category: z.enum(agendaCategories).optional(),
+  difficulty: z.enum(difficultyLevels).optional(),
 }).refine(data => data.endTime > data.startTime, {
   message: "End time must be after start time.",
   path: ["endTime"],

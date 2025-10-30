@@ -3,7 +3,7 @@ import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
-import type { AgendaItem } from '@/types';
+import type { AgendaItem, Difficulty } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -22,6 +22,15 @@ function getDuration(startTime: string, endTime: string): string {
   } catch (e) {
     return '';
   }
+}
+
+function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
+  const styles = {
+    Beginners: 'bg-[hsl(var(--difficulty-beginner))] text-background',
+    Intermediate: 'bg-[hsl(var(--difficulty-intermediate))] text-background',
+    Experts: 'bg-[hsl(var(--difficulty-experts))] text-background',
+  };
+  return <Badge className={styles[difficulty]}>{difficulty}</Badge>;
 }
 
 function AgendaCard({ item }: { item: AgendaItem }) {
@@ -60,6 +69,7 @@ function AgendaCard({ item }: { item: AgendaItem }) {
                           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
                               {item.speaker && <span className="font-medium">{item.speaker}</span>}
                               {item.category && <Badge variant="outline">{item.category}</Badge>}
+                              {item.difficulty && <DifficultyBadge difficulty={item.difficulty} />}
                           </div>
                       </div>
                   </div>
@@ -100,8 +110,9 @@ function AgendaCard({ item }: { item: AgendaItem }) {
 
                 <div>
                     <p className="font-bold">{item.title}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                    <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground mt-1">
                         {item.category && <Badge variant="outline">{item.category}</Badge>}
+                        {item.difficulty && <DifficultyBadge difficulty={item.difficulty} />}
                     </div>
                 </div>
             </div>
