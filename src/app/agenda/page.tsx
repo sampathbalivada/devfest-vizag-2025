@@ -38,8 +38,8 @@ function AgendaCard({ item }: { item: AgendaItem }) {
           {hasDetails ? (
              <Accordion type="single" collapsible>
                 <AccordionItem value={item.id} className="border-none">
-                    <AccordionTrigger className="p-0 hover:no-underline items-start">
-                        <div className="flex-1 text-left">
+                    <AccordionTrigger className="p-0 hover:no-underline items-start text-left">
+                        <div className="flex-1">
                             <p className="font-bold">{item.title}</p>
                             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
                                 {item.speaker && <span className="font-medium">{item.speaker}</span>}
@@ -96,12 +96,12 @@ export default async function AgendaPage() {
 
       {sortedTracks.length > 0 ? (
          <Tabs defaultValue={defaultTab} className="w-full max-w-4xl mx-auto">
-          <TabsList className="h-auto flex-wrap justify-center">
+          <TabsList className="h-auto flex-wrap sm:flex-nowrap sm:overflow-x-auto sm:justify-start justify-center">
             {sortedTracks.map(track => (
               <TabsTrigger 
                 key={track.id} 
                 value={track.id} 
-                className="data-[state=active]:bg-foreground data-[state=active]:text-background"
+                className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-black"
               >
                 {track.name}
               </TabsTrigger>
