@@ -40,25 +40,27 @@ function AgendaCard({ item }: { item: AgendaItem }) {
               </div>
 
               <div className="flex-1 min-w-0">
-                <AccordionTrigger className="p-0 hover:no-underline items-start text-left w-full [&_svg]:shrink-0 [&_svg]:mt-1">
-                   <div className="w-full">
-                     {/* Mobile time/duration */}
-                    <div className="sm:hidden flex items-center justify-between gap-4 text-sm mb-2 w-full">
-                        <div className="flex items-center gap-4">
-                            <span className="font-bold text-primary">{item.startTime}</span>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                <span>{getDuration(item.startTime, item.endTime)}</span>
-                            </div>
-                        </div>
-                    </div>
+                <AccordionTrigger className="p-0 hover:no-underline items-start text-left w-full [&>svg]:shrink-0">
+                   <div className="w-full flex justify-between items-start">
+                     <div className="flex-1">
+                       {/* Mobile time/duration */}
+                      <div className="sm:hidden flex items-center justify-between gap-4 text-sm mb-2 w-full">
+                          <div className="flex items-center gap-4">
+                              <span className="font-bold text-primary">{item.startTime}</span>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{getDuration(item.startTime, item.endTime)}</span>
+                              </div>
+                          </div>
+                      </div>
 
-                    <div className="flex-1">
-                        <p className="font-bold">{item.title}</p>
-                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
-                            {item.speaker && <span className="font-medium">{item.speaker}</span>}
-                            {item.category && <Badge variant="outline">{item.category}</Badge>}
-                        </div>
+                      <div className="flex-1 pr-4">
+                          <p className="font-bold">{item.title}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+                              {item.speaker && <span className="font-medium">{item.speaker}</span>}
+                              {item.category && <Badge variant="outline">{item.category}</Badge>}
+                          </div>
+                      </div>
                     </div>
                   </div>
                 </AccordionTrigger>
