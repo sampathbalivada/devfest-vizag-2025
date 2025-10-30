@@ -1,5 +1,3 @@
-
-
 import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,15 +28,15 @@ function AgendaCard({ item }: { item: AgendaItem }) {
 
   return (
     <div className="py-4">
-      <div className="flex items-start gap-4">
-        <div className="w-24 text-right text-lg font-bold text-primary shrink-0">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="w-16 sm:w-24 text-right text-base sm:text-lg font-bold text-primary shrink-0">
           {item.startTime}
         </div>
         <div className="flex-1 min-w-0">
           {hasDetails ? (
              <Accordion type="single" collapsible>
                 <AccordionItem value={item.id} className="border-none">
-                    <AccordionTrigger className="p-0 hover:no-underline items-start text-left">
+                    <AccordionTrigger className="p-0 hover:no-underline items-start text-left [&>svg]:mt-1">
                         <div className="flex-1">
                             <p className="font-bold">{item.title}</p>
                             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
@@ -61,7 +59,7 @@ function AgendaCard({ item }: { item: AgendaItem }) {
             </div>
           )}
         </div>
-        <div className="w-20 text-sm text-muted-foreground text-right shrink-0">
+        <div className="w-14 sm:w-20 text-sm text-muted-foreground text-right shrink-0">
           <div className="flex items-center justify-end gap-1">
             <Clock className="h-3 w-3" />
             <span>{getDuration(item.startTime, item.endTime)}</span>
@@ -96,7 +94,7 @@ export default async function AgendaPage() {
 
       {sortedTracks.length > 0 ? (
          <Tabs defaultValue={defaultTab} className="w-full max-w-4xl mx-auto">
-          <TabsList className="h-auto flex-wrap sm:flex-nowrap sm:overflow-x-auto sm:justify-start justify-center">
+          <TabsList className="h-auto flex-wrap justify-center sm:h-10 sm:flex-nowrap sm:overflow-x-auto sm:justify-start">
             {sortedTracks.map(track => (
               <TabsTrigger 
                 key={track.id} 
