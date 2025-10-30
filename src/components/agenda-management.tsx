@@ -404,7 +404,7 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Delete "{track.name}"?</AlertDialogTitle>
                                         <AlertDialogDescription>This action cannot be undone. You can only delete tracks that are not being used by any agenda session.</AlertDialogDescription>
-                                    </Aler tDialogHeader>
+                                    </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => onDeleteTrack(track.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
