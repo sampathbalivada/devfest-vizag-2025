@@ -22,8 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AgendaManagementProps {
-  agendaItems: AgendaItem[];
-  tracks: AgendaTrack[];
+  initialAgenda: AgendaItem[];
+  initialTracks: AgendaTrack[];
   token: string;
   onRefresh: () => void;
 }
@@ -35,7 +35,7 @@ const AgendaItemSchema = z.object({
   trackId: z.string().min(1, 'A track must be selected.'),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:MM format.'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'End time must be in HH:MM format.'),
-  category: z.enum(agendaCategories).optional(),
+  category: z.string().optional(),
 }).refine(data => data.endTime > data.startTime, {
   message: "End time must be after start time.",
   path: ["endTime"],
@@ -62,12 +62,12 @@ function AgendaForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<AgendaFormValues>({
     resolver: zodResolver(AgendaItemSchema),
-    defaultValues: item ? { ...item, trackId: item.trackId } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: undefined },
+    defaultValues: item ? { ...item, trackId: item.trackId, category: item.category || 'none' } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none' },
   });
   
   useEffect(() => {
     if(isOpen) {
-      form.reset(item ? { ...item, trackId: item.trackId } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: undefined });
+      form.reset(item ? { ...item, trackId: item.trackId, category: item.category || 'none' } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none' });
     }
   }, [item, isOpen, form]);
 
@@ -78,9 +78,14 @@ function AgendaForm({
     if (item?.id) {
       formData.append('id', item.id);
     }
+    
     Object.entries(values).forEach(([key, value]) => {
       if (value) {
-        formData.append(key, value);
+        if (key === 'category' && value === 'none') {
+            // Don't append category if it's 'none'
+        } else {
+            formData.append(key, value);
+        }
       }
     });
 
@@ -144,7 +149,7 @@ function AgendaForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           <SelectItem value="">None</SelectItem>
+                           <SelectItem value="none">None</SelectItem>
                           {agendaCategories.map(category => (
                             <SelectItem key={category} value={category}>
                               {category}
@@ -180,12 +185,19 @@ const TrackSchema = z.object({
 });
 type TrackFormValues = z.infer<typeof TrackSchema>;
 
-export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: AgendaManagementProps) {
+export function AgendaManagement({ initialAgenda, initialTracks, token, onRefresh }: AgendaManagementProps) {
+  const [agendaItems, setAgendaItems] = useState<AgendaItem[]>(initialAgenda);
+  const [tracks, setTracks] = useState<AgendaTrack[]>(initialTracks);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AgendaItem | null>(null);
   const [editingTrack, setEditingTrack] = useState<AgendaTrack | null>(null);
   const { toast } = useToast();
   
+  useEffect(() => {
+    setAgendaItems(initialAgenda);
+    setTracks(initialTracks);
+  }, [initialAgenda, initialTracks]);
+
   const form = useForm<TrackFormValues>({
     resolver: zodResolver(TrackSchema),
     defaultValues: { name: '', order: 100 }
@@ -195,9 +207,10 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
     if (editingTrack) {
         form.reset({ name: editingTrack.name, order: editingTrack.order ?? 100 });
     } else {
-        form.reset({ name: '', order: 100 });
+        const nextOrder = tracks.length > 0 ? Math.max(...tracks.map(t => t.order || 0)) + 10 : 10;
+        form.reset({ name: '', order: nextOrder });
     }
-  }, [editingTrack, form]);
+  }, [editingTrack, form, tracks]);
 
 
   const handleAdd = () => {
@@ -239,22 +252,6 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
   };
-  
-  const onUpdateTrackOrder = async (track: AgendaTrack, newOrder: number) => {
-    const formData = new FormData();
-    formData.append('id', track.id);
-    formData.append('name', track.name);
-    formData.append('order', newOrder.toString());
-
-    const result = await manageAgendaTrack(formData, token);
-     if (result.success) {
-        toast({ title: 'Success', description: `Track order updated.` });
-        onRefresh();
-    } else {
-        toast({ variant: 'destructive', title: 'Error', description: result.error });
-    }
-  }
-
 
   const onDeleteTrack = async (id: string) => {
     const result = await deleteAgendaTrack(id, token);
@@ -369,18 +366,19 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
         </CardHeader>
         <CardContent>
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onManageTrack)} className="flex items-start gap-2 mb-4">
-                    <div className="flex-grow">
-                        <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Track name..." {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                         <FormField control={form.control} name="order" render={({ field }) => ( <FormItem className="mt-2"><FormControl><Input type="number" placeholder="Order..." {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                <form onSubmit={form.handleSubmit(onManageTrack)} className="space-y-4">
+                    <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Track Name</FormLabel><FormControl><Input placeholder="e.g., Main Stage" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={form.control} name="order" render={({ field }) => ( <FormItem><FormLabel>Display Order</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <div className="flex gap-2">
+                        <Button type="submit" disabled={form.formState.isSubmitting}>{editingTrack ? 'Save Changes' : 'Add Track'}</Button>
+                        {editingTrack && <Button type="button" variant="ghost" onClick={() => { setEditingTrack(null); }}>Cancel</Button>}
                     </div>
-                    <Button type="submit">{editingTrack ? 'Save' : 'Add'}</Button>
-                    {editingTrack && <Button type="button" variant="ghost" onClick={() => { setEditingTrack(null); }}>Cancel</Button>}
                 </form>
             </Form>
-            <div className="space-y-2">
+            <div className="space-y-2 mt-6">
+                 <h3 className="text-sm font-medium text-muted-foreground">Existing Tracks</h3>
                 {[...tracks].sort((a,b) => (a.order ?? 999) - (b.order ?? 999)).map(track => (
-                    <div key={track.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
+                    <div key={track.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground w-6 text-center">{track.order}</span>
                             <span className="text-sm font-medium">{track.name}</span>

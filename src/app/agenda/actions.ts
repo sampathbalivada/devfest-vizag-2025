@@ -97,7 +97,7 @@ export async function deleteAgendaItem(id: string, token: string) {
 // Track Actions
 export async function getAgendaTracks(): Promise<AgendaTrack[]> {
     try {
-        const snapshot = await adminDb.collection('agendaTracks').orderBy('order').get();
+        const snapshot = await adminDb.collection('agendaTracks').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AgendaTrack));
     } catch (error) {
         console.error("Error fetching agenda tracks: ", error);
