@@ -33,42 +33,44 @@ function AgendaCard({ item }: { item: AgendaItem }) {
       {hasDetails ? (
         <Accordion type="single" collapsible>
           <AccordionItem value={item.id} className="border-none">
-            <AccordionTrigger className="p-0 hover:no-underline items-start text-left w-full [&>svg]:shrink-0">
-                <div className="flex w-full items-start gap-3 sm:gap-4">
-                    {/* Desktop time */}
-                    <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
-                        {item.startTime}
-                    </div>
+             <div className="flex items-start">
+              <AccordionTrigger className="p-0 hover:no-underline items-start text-left flex-grow [&>svg]:shrink-0">
+                  <div className="flex w-full items-start gap-3 sm:gap-4">
+                      {/* Desktop time */}
+                      <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
+                          {item.startTime}
+                      </div>
 
-                    {/* Main Content */}
-                    <div className="flex-1 min-w-0">
-                        {/* Mobile time/duration */}
-                        <div className="sm:hidden flex items-center gap-4 text-sm mb-2">
-                            <span className="font-bold text-primary">{item.startTime}</span>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                <span>{getDuration(item.startTime, item.endTime)}</span>
-                            </div>
-                        </div>
+                      {/* Main Content */}
+                      <div className="flex-1 min-w-0">
+                          {/* Mobile time/duration */}
+                          <div className="sm:hidden flex justify-between items-center w-full mb-2">
+                              <div className="flex items-center gap-4 text-sm">
+                                  <span className="font-bold text-primary">{item.startTime}</span>
+                                  <div className="flex items-center gap-1 text-muted-foreground">
+                                      <Clock className="h-3 w-3" />
+                                      <span>{getDuration(item.startTime, item.endTime)}</span>
+                                  </div>
+                              </div>
+                          </div>
 
-                        <div className="pr-4">
-                            <p className="font-bold">{item.title}</p>
-                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
-                                {item.speaker && <span className="font-medium">{item.speaker}</span>}
-                                {item.category && <Badge variant="outline">{item.category}</Badge>}
-                            </div>
-                        </div>
-                    </div>
+                          <div className="pr-4">
+                              <p className="font-bold">{item.title}</p>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+                                  {item.speaker && <span className="font-medium">{item.speaker}</span>}
+                                  {item.category && <Badge variant="outline">{item.category}</Badge>}
+                              </div>
+                          </div>
+                      </div>
 
-                    {/* Desktop duration */}
-                    <div className="hidden sm:block w-20 text-sm text-muted-foreground text-right shrink-0">
-                        <div className="flex items-center justify-end gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{getDuration(item.startTime, item.endTime)}</span>
-                        </div>
-                    </div>
-                </div>
-            </AccordionTrigger>
+                      {/* Desktop duration */}
+                      <div className="hidden sm:flex w-20 text-sm text-muted-foreground text-right shrink-0 justify-end items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{getDuration(item.startTime, item.endTime)}</span>
+                      </div>
+                  </div>
+              </AccordionTrigger>
+            </div>
             <AccordionContent className="pt-4 pb-0 pl-0 sm:pl-[7.75rem]">
               {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
             </AccordionContent>
@@ -101,11 +103,9 @@ function AgendaCard({ item }: { item: AgendaItem }) {
             </div>
 
             {/* Desktop duration */}
-            <div className="hidden sm:block w-20 text-sm text-muted-foreground text-right shrink-0">
-                <div className="flex items-center justify-end gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{getDuration(item.startTime, item.endTime)}</span>
-                </div>
+            <div className="hidden sm:flex w-20 text-sm text-muted-foreground text-right shrink-0 justify-end items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{getDuration(item.startTime, item.endTime)}</span>
             </div>
         </div>
       )}
@@ -120,7 +120,7 @@ export default async function AgendaPage() {
     getAgendaTracks()
   ]);
 
-  const sortedTracks = [...unsortedTracks].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const sortedTracks = [...(unsortedTracks || [])].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
   const defaultTab = sortedTracks.length > 0 ? sortedTracks[0].id : '';
 
@@ -137,17 +137,19 @@ export default async function AgendaPage() {
 
       {sortedTracks.length > 0 ? (
          <Tabs defaultValue={defaultTab} className="w-full max-w-4xl mx-auto">
-          <TabsList className="h-auto flex-wrap justify-center sm:h-10 sm:flex-nowrap sm:overflow-x-auto sm:justify-start">
-            {sortedTracks.map(track => (
-              <TabsTrigger 
-                key={track.id} 
-                value={track.id} 
-                className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-black"
-              >
-                {track.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="relative">
+            <TabsList className="h-auto flex-wrap justify-center sm:h-10 sm:flex-nowrap sm:overflow-x-auto sm:justify-start">
+              {sortedTracks.map(track => (
+                <TabsTrigger 
+                  key={track.id} 
+                  value={track.id} 
+                  className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-black"
+                >
+                  {track.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
           
           {sortedTracks.map(track => (
             <TabsContent key={track.id} value={track.id} className="mt-8">
