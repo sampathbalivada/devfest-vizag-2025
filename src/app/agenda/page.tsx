@@ -40,10 +40,10 @@ function AgendaCard({ item }: { item: AgendaItem }) {
               </div>
 
               <div className="flex-1 min-w-0">
-                <AccordionTrigger className="p-0 hover:no-underline items-start text-left w-full [&_svg]:shrink-0">
+                <AccordionTrigger className="p-0 hover:no-underline items-start text-left w-full [&_svg]:shrink-0 [&_svg]:mt-1">
                    <div className="w-full">
                      {/* Mobile time/duration */}
-                    <div className="sm:hidden flex items-center justify-between gap-4 text-sm mb-2">
+                    <div className="sm:hidden flex items-center justify-between gap-4 text-sm mb-2 w-full">
                         <div className="flex items-center gap-4">
                             <span className="font-bold text-primary">{item.startTime}</span>
                             <div className="flex items-center gap-1 text-muted-foreground">
