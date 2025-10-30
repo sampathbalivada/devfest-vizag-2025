@@ -1,5 +1,4 @@
 
-
 import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +33,7 @@ function AgendaCard({ item }: { item: AgendaItem }) {
         <Accordion type="single" collapsible>
           <AccordionItem value={item.id} className="border-none">
              <div className="flex items-start">
-              <AccordionTrigger className="p-0 hover:no-underline items-start text-left flex-grow [&>svg]:shrink-0">
+              <AccordionTrigger className="p-0 hover:no-underline items-start text-left flex-grow [&>svg]:shrink-0 [&>svg]:mt-1">
                   <div className="flex w-full items-start gap-3 sm:gap-4">
                       {/* Desktop time */}
                       <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
