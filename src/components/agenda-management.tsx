@@ -73,7 +73,7 @@ function AgendaForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const defaultValues = useMemo(() => item 
-    ? { ...item, category: item.category || 'none', difficulty: item.difficulty || [] } 
+    ? { ...item, category: item.category || 'none', difficulty: Array.isArray(item.difficulty) ? item.difficulty : (item.difficulty ? [item.difficulty] : []) } 
     : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none', difficulty: [] }, [item]);
   
   const form = useForm<AgendaFormValues>({
@@ -368,7 +368,9 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {group.items.map((item) => (
+                                    {group.items.map((item) => {
+                                        const difficulties = Array.isArray(item.difficulty) ? item.difficulty : (item.difficulty ? [item.difficulty] : []);
+                                        return (
                                         <TableRow key={item.id}>
                                             <TableCell>
                                                 <Badge variant="outline" className="flex items-center gap-1.5 whitespace-nowrap">
@@ -379,7 +381,7 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
                                               <div className="font-medium">{item.title}</div>
                                               <div className="flex flex-wrap items-center gap-1 mt-1">
                                                 {item.category && <Badge variant="secondary">{item.category}</Badge>}
-                                                {item.difficulty?.map(d => <DifficultyBadge key={d} difficulty={d} />)}
+                                                {difficulties.map(d => <DifficultyBadge key={d} difficulty={d} />)}
                                               </div>
                                             </TableCell>
                                             <TableCell>{item.speaker || 'N/A'}</TableCell>
@@ -405,7 +407,7 @@ export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: Agen
                                                 </AlertDialog>
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )})}
                                 </TableBody>
                             </Table>
                         </div>
