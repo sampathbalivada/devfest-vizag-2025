@@ -4,7 +4,7 @@ import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
-import type { AgendaItem, AgendaTrack } from '@/types';
+import type { AgendaItem } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -33,80 +33,79 @@ function AgendaCard({ item }: { item: AgendaItem }) {
       {hasDetails ? (
         <Accordion type="single" collapsible>
           <AccordionItem value={item.id} className="border-none">
-            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-              {/* Desktop time */}
-              <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
-                {item.startTime}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <AccordionTrigger className="p-0 hover:no-underline items-start text-left w-full [&>svg]:shrink-0">
-                   <div className="w-full flex justify-between items-start">
-                     <div className="flex-1">
-                       {/* Mobile time/duration */}
-                      <div className="sm:hidden flex items-center justify-between gap-4 text-sm mb-2 w-full">
-                          <div className="flex items-center gap-4">
-                              <span className="font-bold text-primary">{item.startTime}</span>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{getDuration(item.startTime, item.endTime)}</span>
-                              </div>
-                          </div>
-                      </div>
-
-                      <div className="flex-1 pr-4">
-                          <p className="font-bold">{item.title}</p>
-                          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
-                              {item.speaker && <span className="font-medium">{item.speaker}</span>}
-                              {item.category && <Badge variant="outline">{item.category}</Badge>}
-                          </div>
-                      </div>
+            <AccordionTrigger className="p-0 hover:no-underline items-start text-left w-full [&>svg]:shrink-0">
+                <div className="flex w-full items-start gap-3 sm:gap-4">
+                    {/* Desktop time */}
+                    <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
+                        {item.startTime}
                     </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-0">
-                  {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
-                </AccordionContent>
-              </div>
 
-              {/* Desktop duration */}
-              <div className="hidden sm:block w-20 text-sm text-muted-foreground text-right shrink-0">
-                <div className="flex items-center justify-end gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{getDuration(item.startTime, item.endTime)}</span>
+                    {/* Main Content */}
+                    <div className="flex-1 min-w-0">
+                        {/* Mobile time/duration */}
+                        <div className="sm:hidden flex items-center gap-4 text-sm mb-2">
+                            <span className="font-bold text-primary">{item.startTime}</span>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{getDuration(item.startTime, item.endTime)}</span>
+                            </div>
+                        </div>
+
+                        <div className="pr-4">
+                            <p className="font-bold">{item.title}</p>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+                                {item.speaker && <span className="font-medium">{item.speaker}</span>}
+                                {item.category && <Badge variant="outline">{item.category}</Badge>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Desktop duration */}
+                    <div className="hidden sm:block w-20 text-sm text-muted-foreground text-right shrink-0">
+                        <div className="flex items-center justify-end gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{getDuration(item.startTime, item.endTime)}</span>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4 pb-0 pl-0 sm:pl-[7.75rem]">
+              {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
+            </AccordionContent>
           </AccordionItem>
         </Accordion>
       ) : (
-        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-           {/* Desktop time */}
-          <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
-            {item.startTime}
-          </div>
-           <div className="flex-1 min-w-0">
-             {/* Mobile time/duration */}
-           <div className="sm:hidden flex items-center gap-4 text-sm mb-2">
-                <span className="font-bold text-primary">{item.startTime}</span>
-                <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="flex w-full items-start gap-3 sm:gap-4">
+            {/* Desktop time */}
+            <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
+                {item.startTime}
+            </div>
+            
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
+                {/* Mobile time/duration */}
+                <div className="sm:hidden flex items-center gap-4 text-sm mb-2">
+                    <span className="font-bold text-primary">{item.startTime}</span>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>{getDuration(item.startTime, item.endTime)}</span>
+                    </div>
+                </div>
+
+                <div>
+                    <p className="font-bold">{item.title}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        {item.category && <Badge variant="outline">{item.category}</Badge>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Desktop duration */}
+            <div className="hidden sm:block w-20 text-sm text-muted-foreground text-right shrink-0">
+                <div className="flex items-center justify-end gap-1">
                     <Clock className="h-3 w-3" />
                     <span>{getDuration(item.startTime, item.endTime)}</span>
                 </div>
-            </div>
-             <div>
-                <p className="font-bold">{item.title}</p>
-                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                    {item.category && <Badge variant="outline">{item.category}</Badge>}
-                </div>
-            </div>
-          </div>
-           {/* Desktop duration */}
-            <div className="hidden sm:block w-20 text-sm text-muted-foreground text-right shrink-0">
-            <div className="flex items-center justify-end gap-1">
-                <Clock className="h-3 w-3" />
-                <span>{getDuration(item.startTime, item.endTime)}</span>
-            </div>
             </div>
         </div>
       )}
