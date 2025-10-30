@@ -95,7 +95,7 @@ export default function Home() {
               <Button asChild size="lg" variant="secondary">
                   <Link href="/agenda">
                       <BookOpen />
-                      View Agenda
+                      View Tentative Agenda
                   </Link>
               </Button>
             </div>

@@ -18,6 +18,7 @@ interface AdminManagementProps {
   initialAdmins: AdminUser[];
   token: string;
   currentUserUid: string;
+  onRefresh: () => void;
 }
 
 const AddAdminSchema = z.object({
@@ -26,8 +27,7 @@ const AddAdminSchema = z.object({
 
 type AddAdminFormValues = z.infer<typeof AddAdminSchema>;
 
-export function AdminManagement({ initialAdmins, token, currentUserUid }: AdminManagementProps) {
-  const [admins, setAdmins] = useState<AdminUser[]>(initialAdmins);
+export function AdminManagement({ initialAdmins, token, currentUserUid, onRefresh }: AdminManagementProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const { toast } = useToast();
@@ -43,7 +43,7 @@ export function AdminManagement({ initialAdmins, token, currentUserUid }: AdminM
       toast({ variant: 'destructive', title: 'Error', description: result.error });
     } else if (result.admin) {
       toast({ title: 'Success', description: `Added ${result.admin.email} as an admin.` });
-      setAdmins(currentAdmins => [...currentAdmins, result.admin!].sort((a,b) => a.email.localeCompare(b.email)));
+      onRefresh();
       reset();
     }
     setIsSubmitting(false);
@@ -56,7 +56,7 @@ export function AdminManagement({ initialAdmins, token, currentUserUid }: AdminM
       toast({ variant: 'destructive', title: 'Error', description: result.error });
     } else {
       toast({ title: 'Success', description: `Admin ${email} removed successfully.` });
-      setAdmins(currentAdmins => currentAdmins.filter(admin => admin.uid !== uid));
+      onRefresh();
     }
     setIsDeleting(null);
   };
@@ -101,7 +101,7 @@ export function AdminManagement({ initialAdmins, token, currentUserUid }: AdminM
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {admins.map((admin) => (
+                {initialAdmins.map((admin) => (
                   <TableRow key={admin.uid}>
                     <TableCell className="font-medium">{admin.email}</TableCell>
                     <TableCell className="text-right">
@@ -138,7 +138,7 @@ export function AdminManagement({ initialAdmins, token, currentUserUid }: AdminM
                     </TableCell>
                   </TableRow>
                 ))}
-                 {admins.length === 0 && (
+                 {initialAdmins.length === 0 && (
                     <TableRow>
                         <TableCell colSpan={2} className="h-24 text-center">
                             No administrators found. Add one above.

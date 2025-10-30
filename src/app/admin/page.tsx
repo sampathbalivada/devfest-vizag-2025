@@ -28,6 +28,41 @@ export default function AdminPage() {
   const [agenda, setAgenda] = useState<AgendaItem[]>([]);
   const [agendaTracks, setAgendaTracks] = useState<AgendaTrack[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchData = async (idToken: string) => {
+    try {
+      const [
+        initialJobs, 
+        initialApplicationsData, 
+        initialAdminsData, 
+        initialAgendaData,
+        initialAgendaTracksData,
+        initialAnnouncementsData
+      ] = await Promise.all([
+        getJobs(),
+        getApplications(idToken, { status: 'All', jobTitle: 'All' }, { limit: ITEMS_PER_PAGE }),
+        getAdmins(idToken),
+        getAgenda(),
+        getAgendaTracks(),
+        getAnnouncements()
+      ]);
+      setJobs(initialJobs);
+      setApplications(initialApplicationsData.applications);
+      setNextCursor(initialApplicationsData.nextCursor);
+      if (initialAdminsData.admins) {
+        setAdmins(initialAdminsData.admins);
+      } else if (initialAdminsData.error) {
+        console.error("Error fetching admins:", initialAdminsData.error);
+      }
+      setAgenda(initialAgendaData);
+      setAgendaTracks(initialAgendaTracksData);
+      setAnnouncements(initialAnnouncementsData);
+    } catch (error) {
+       console.error("Error fetching admin data:", error);
+       setStatus({ isLoading: false, isAuthorized: false, token: '', uid: '' });
+    }
+  };
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -36,33 +71,9 @@ export default function AdminPage() {
           const idToken = await user.getIdToken();
           const adminCheck = await isAdmin(idToken);
           if (adminCheck.isAdmin) {
-            const [
-                initialJobs, 
-                initialApplicationsData, 
-                initialAdminsData, 
-                initialAgendaData,
-                initialAgendaTracksData,
-                initialAnnouncementsData
-            ] = await Promise.all([
-              getJobs(),
-              getApplications(idToken, { status: 'All', jobTitle: 'All' }, { limit: ITEMS_PER_PAGE }),
-              getAdmins(idToken),
-              getAgenda(),
-              getAgendaTracks(),
-              getAnnouncements()
-            ]);
-            setJobs(initialJobs);
-            setApplications(initialApplicationsData.applications);
-            setNextCursor(initialApplicationsData.nextCursor);
-            if (initialAdminsData.admins) {
-              setAdmins(initialAdminsData.admins);
-            } else if (initialAdminsData.error) {
-              console.error("Error fetching admins:", initialAdminsData.error);
-            }
-            setAgenda(initialAgendaData);
-            setAgendaTracks(initialAgendaTracksData);
-            setAnnouncements(initialAnnouncementsData);
-            setStatus({ isLoading: false, isAuthorized: true, token: idToken, uid: user.uid });
+            setStatus({ isLoading: true, isAuthorized: true, token: idToken, uid: user.uid });
+            await fetchData(idToken);
+            setStatus(prev => ({ ...prev, isLoading: false }));
           } else {
             setStatus({ isLoading: false, isAuthorized: false, token: '', uid: '' });
           }
@@ -77,7 +88,11 @@ export default function AdminPage() {
     if (!loading) {
       checkAdmin();
     }
-  }, [user, loading]);
+  }, [user, loading, refreshKey]);
+
+  const handleDataRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  }
 
   if (status.isLoading) {
     return (
@@ -121,6 +136,7 @@ export default function AdminPage() {
         initialAnnouncements={announcements}
         currentUserUid={status.uid}
         token={status.token}
+        onDataRefresh={handleDataRefresh}
       />
     </div>
   );

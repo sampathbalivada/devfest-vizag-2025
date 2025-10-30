@@ -37,7 +37,7 @@ interface JobFormDialogProps {
   setIsOpen: (isOpen: boolean) => void;
   job: Job | null;
   token: string;
-  onFormSubmit: (job: Job) => void;
+  onFormSubmit: () => void;
 }
 
 const JobSchema = z.object({
@@ -89,7 +89,7 @@ export function JobFormDialog({ isOpen, setIsOpen, job, token, onFormSubmit }: J
 
     if (result.success && result.job) {
       toast({ title: 'Success', description: result.success });
-      onFormSubmit(result.job);
+      onFormSubmit();
       setIsOpen(false);
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.error });

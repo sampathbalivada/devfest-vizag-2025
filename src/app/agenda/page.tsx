@@ -1,88 +1,189 @@
-import { getAgenda } from '@/app/agenda/actions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { User, Clock } from 'lucide-react';
-import type { AgendaItem } from '@/types';
 
+import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Clock } from 'lucide-react';
+import type { AgendaItem, Difficulty } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
-// Helper function to group and sort agenda items
-function processAgenda(agendaItems: AgendaItem[]) {
-  const tracks: { [key: string]: AgendaItem[] } = {};
-  agendaItems.forEach(item => {
-    const trackKey = item.trackName || 'Unassigned';
-    if (!tracks[trackKey]) {
-      tracks[trackKey] = [];
+function getDuration(startTime: string, endTime: string): string {
+  try {
+    const start = new Date(`1970-01-01T${startTime}:00`);
+    const end = new Date(`1970-01-01T${endTime}:00`);
+    const diff = (end.getTime() - start.getTime()) / (1000 * 60); // difference in minutes
+    if (diff > 0) {
+      return `${diff}min`;
     }
-    tracks[trackKey].push(item);
-  });
-
-  // Sort sessions within each track by start time
-  for (const trackName in tracks) {
-    tracks[trackName].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    return '';
+  } catch (e) {
+    return '';
   }
-  
-  // Sort tracks alphabetically, except for a potential "Main Stage" or "General" track which should come first
-  const sortedTrackNames = Object.keys(tracks).sort((a, b) => {
-    if (a.toLowerCase().includes('main') || a.toLowerCase().includes('general')) return -1;
-    if (b.toLowerCase().includes('main') || b.toLowerCase().includes('general')) return 1;
-    return a.localeCompare(b);
-  });
+}
 
-  return { tracks, sortedTrackNames };
+function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
+  const styles = {
+    Beginners: 'bg-[hsl(var(--difficulty-beginner))] text-background',
+    Intermediate: 'bg-[hsl(var(--difficulty-intermediate))] text-background',
+    Experts: 'bg-[hsl(var(--difficulty-experts))] text-background',
+  };
+  return <Badge className={styles[difficulty]}>{difficulty}</Badge>;
+}
+
+function AgendaCard({ item }: { item: AgendaItem }) {
+  const hasDetails = item.speaker || item.description;
+  const duration = getDuration(item.startTime, item.endTime);
+  const difficulties = Array.isArray(item.difficulty) ? item.difficulty : (item.difficulty ? [item.difficulty] : []);
+
+
+  return (
+    <div className="py-4">
+      {hasDetails ? (
+        <Accordion type="single" collapsible>
+          <AccordionItem value={item.id} className="border-none">
+            <AccordionTrigger className="p-0 hover:no-underline items-start text-left flex-grow w-full [&>svg]:mt-1 [&>svg]:shrink-0">
+              <div className="flex w-full items-start gap-3 sm:gap-4">
+                  {/* Desktop time */}
+                  <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
+                      {item.startTime}
+                  </div>
+
+                  {/* Main Content */}
+                  <div className="flex-1 min-w-0">
+                      {/* Mobile time/duration */}
+                      <div className="sm:hidden flex justify-between items-center w-full mb-2">
+                          <div className="flex items-center gap-4 text-sm">
+                              <span className="font-bold text-primary">{item.startTime}</span>
+                              {duration && (
+                                <div className="flex items-center gap-1 text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{duration}</span>
+                                </div>
+                              )}
+                          </div>
+                      </div>
+
+                      <div className="pr-4">
+                          <p className="font-bold">{item.title}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+                              {item.speaker && <span className="font-medium">{item.speaker}</span>}
+                              {item.category && <Badge variant="outline">{item.category}</Badge>}
+                              {difficulties.map((d) => <DifficultyBadge key={d} difficulty={d} />)}
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Desktop duration */}
+                  {duration && (
+                    <div className="hidden sm:flex w-20 text-sm text-muted-foreground shrink-0 justify-end items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{duration}</span>
+                    </div>
+                  )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4 pb-0 pl-0 sm:pl-[7.75rem]">
+              {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      ) : (
+        <div className="flex w-full items-start gap-3 sm:gap-4">
+            {/* Desktop time */}
+            <div className="hidden sm:block w-24 text-right text-lg font-bold text-primary shrink-0">
+                {item.startTime}
+            </div>
+            
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
+                {/* Mobile time/duration */}
+                <div className="sm:hidden flex items-center gap-4 text-sm mb-2">
+                    <span className="font-bold text-primary">{item.startTime}</span>
+                    {duration && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>{duration}</span>
+                      </div>
+                    )}
+                </div>
+
+                <div>
+                    <p className="font-bold">{item.title}</p>
+                    <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground mt-1">
+                        {item.category && <Badge variant="outline">{item.category}</Badge>}
+                        {difficulties.map((d) => <DifficultyBadge key={d} difficulty={d} />)}
+                    </div>
+                </div>
+            </div>
+
+            {/* Desktop duration */}
+            {duration && (
+              <div className="hidden sm:flex w-20 text-sm text-muted-foreground shrink-0 justify-end items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{duration}</span>
+              </div>
+            )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 
 export default async function AgendaPage() {
-  const agendaItems = await getAgenda();
-  const { tracks, sortedTrackNames } = processAgenda(agendaItems);
+  const [allAgendaItems, unsortedTracks] = await Promise.all([
+    getAgenda(),
+    getAgendaTracks()
+  ]);
+
+  const sortedTracks = [...(unsortedTracks || [])].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+  const defaultTab = sortedTracks.length > 0 ? sortedTracks[0].id : '';
 
   return (
     <div className="container mx-auto py-12 px-4 animate-fade-in-up">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
-          Event Agenda
+          Event Tentative Agenda
         </h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
           Plan your day with our detailed schedule. Sessions for every interest!
         </p>
       </div>
 
-      {sortedTrackNames.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {sortedTrackNames.map(trackName => (
-            <div key={trackName} className="flex flex-col gap-6">
-              <h2 className="text-2xl font-bold text-center lg:text-left">{trackName}</h2>
-              {tracks[trackName].map(item => (
-                <Card key={item.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start gap-2">
-                        <div className="flex-grow">
-                            <CardTitle className="text-lg mb-2">{item.title}</CardTitle>
-                            {item.category && <Badge variant="outline">{item.category}</Badge>}
-                        </div>
-                        <Badge variant="secondary" className="flex-shrink-0">
-                            <Clock className="mr-1.5 h-4 w-4" />
-                            {item.startTime} - {item.endTime}
-                        </Badge>
-                    </div>
-                    {item.speaker && (
-                        <div className="flex items-center text-sm text-muted-foreground pt-2">
-                            <User className="mr-2 h-4 w-4" />
-                            <span>{item.speaker}</span>
-                        </div>
-                    )}
-                  </CardHeader>
-                  {item.description && (
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </CardContent>
-                  )}
-                </Card>
+      {sortedTracks.length > 0 ? (
+         <Tabs defaultValue={defaultTab} className="w-full max-w-4xl mx-auto">
+          <div className="relative">
+            <TabsList className="h-auto flex-wrap justify-center sm:h-10 sm:flex-nowrap sm:overflow-x-auto sm:justify-start">
+              {sortedTracks.map(track => (
+                <TabsTrigger 
+                  key={track.id} 
+                  value={track.id} 
+                  className="data-[state=active]:bg-black data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-black"
+                >
+                  {track.name}
+                </TabsTrigger>
               ))}
-            </div>
+            </TabsList>
+          </div>
+          
+          {sortedTracks.map(track => (
+            <TabsContent key={track.id} value={track.id} className="mt-8">
+                 <Card>
+                    <CardContent className="divide-y">
+                        {allAgendaItems
+                          .filter(item => item.trackId === track.id)
+                          .map(item => (
+                            <AgendaCard key={item.id} item={item} />
+                        ))}
+                    </CardContent>
+                </Card>
+            </TabsContent>
           ))}
-        </div>
+        </Tabs>
       ) : (
         <div className="text-center py-16">
           <p className="text-muted-foreground text-lg">The agenda is being finalized. Check back soon!</p>

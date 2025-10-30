@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { AgendaItem, AgendaTrack, agendaCategories } from '@/types';
-import { manageAgendaItem, deleteAgendaItem, getAgenda, getAgendaTracks, manageAgendaTrack, deleteAgendaTrack } from '@/app/agenda/actions';
+import { AgendaItem, AgendaTrack, agendaCategories, difficultyLevels, Difficulty } from '@/types';
+import { manageAgendaItem, deleteAgendaItem, manageAgendaTrack, deleteAgendaTrack } from '@/app/agenda/actions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -20,11 +20,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Loader2, PlusCircle, MoreHorizontal, Pencil, Trash2, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from './ui/checkbox';
 
 interface AgendaManagementProps {
-  initialAgendaItems: AgendaItem[];
-  initialTracks: AgendaTrack[];
+  agendaItems: AgendaItem[];
+  tracks: AgendaTrack[];
   token: string;
+  onRefresh: () => void;
 }
 
 const AgendaItemSchema = z.object({
@@ -34,13 +36,23 @@ const AgendaItemSchema = z.object({
   trackId: z.string().min(1, 'A track must be selected.'),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:MM format.'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'End time must be in HH:MM format.'),
-  category: z.enum(agendaCategories).optional(),
+  category: z.string().optional(),
+  difficulty: z.array(z.string()).optional(),
 }).refine(data => data.endTime > data.startTime, {
   message: "End time must be after start time.",
   path: ["endTime"],
 });
 
 type AgendaFormValues = z.infer<typeof AgendaItemSchema>;
+
+function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
+  const styles = {
+    Beginners: 'bg-[hsl(var(--difficulty-beginner))] text-background',
+    Intermediate: 'bg-[hsl(var(--difficulty-intermediate))] text-background',
+    Experts: 'bg-[hsl(var(--difficulty-experts))] text-background',
+  };
+  return <Badge className={styles[difficulty]}>{difficulty}</Badge>;
+}
 
 function AgendaForm({
   isOpen,
@@ -59,10 +71,22 @@ function AgendaForm({
 }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const defaultValues = useMemo(() => item 
+    ? { ...item, category: item.category || 'none', difficulty: Array.isArray(item.difficulty) ? item.difficulty : (item.difficulty ? [item.difficulty] : []) } 
+    : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00', category: 'none', difficulty: [] }, [item]);
+  
   const form = useForm<AgendaFormValues>({
     resolver: zodResolver(AgendaItemSchema),
-    defaultValues: item ? { ...item, trackId: item.trackId } : { title: '', speaker: '', description: '', trackId: '', startTime: '09:00', endTime: '10:00' },
+    defaultValues,
   });
+  
+  useEffect(() => {
+    if(isOpen) {
+      form.reset(defaultValues);
+    }
+  }, [item, isOpen, form, defaultValues]);
+
 
   const onSubmit = async (values: AgendaFormValues) => {
     setIsSubmitting(true);
@@ -70,9 +94,16 @@ function AgendaForm({
     if (item?.id) {
       formData.append('id', item.id);
     }
+    
     Object.entries(values).forEach(([key, value]) => {
-      if (value) {
-        formData.append(key, value);
+      if (key === 'difficulty' && Array.isArray(value)) {
+        value.forEach(d => formData.append('difficulty', d));
+      } else if (value) {
+        if (key === 'category' && value === 'none') {
+            // Don't append if it's the 'none' placeholder
+        } else {
+            formData.append(key, String(value));
+        }
       }
     });
 
@@ -89,7 +120,7 @@ function AgendaForm({
   
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{item ? 'Edit Agenda Item' : 'Add Agenda Item'}</DialogTitle>
           <DialogDescription>Fill in the details for the agenda session.</DialogDescription>
@@ -98,7 +129,7 @@ function AgendaForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField control={form.control} name="title" render={({ field }) => ( <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="speaker" render={({ field }) => ( <FormItem><FormLabel>Speaker</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="trackId"
@@ -136,6 +167,7 @@ function AgendaForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                           <SelectItem value="none">None</SelectItem>
                           {agendaCategories.map(category => (
                             <SelectItem key={category} value={category}>
                               {category}
@@ -148,6 +180,48 @@ function AgendaForm({
                   )}
                 />
             </div>
+            <FormField
+              control={form.control}
+              name="difficulty"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Difficulty</FormLabel>
+                   <div className="flex items-center space-x-4">
+                    {difficultyLevels.map((level) => (
+                      <FormField
+                        key={level}
+                        control={form.control}
+                        name="difficulty"
+                        render={({ field }) => {
+                          return (
+                            <FormItem key={level} className="flex flex-row items-start space-x-2 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(level)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), level])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== level
+                                          )
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {level}
+                              </FormLabel>
+                            </FormItem>
+                          )
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="startTime" render={({ field }) => ( <FormItem><FormLabel>Start Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -167,26 +241,33 @@ function AgendaForm({
 const TrackSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Track name cannot be empty.'),
+  order: z.coerce.number().optional(),
 });
 type TrackFormValues = z.infer<typeof TrackSchema>;
 
-export function AgendaManagement({ initialAgendaItems, initialTracks, token }: AgendaManagementProps) {
-  const [agendaItems, setAgendaItems] = useState<AgendaItem[]>(initialAgendaItems);
-  const [tracks, setTracks] = useState<AgendaTrack[]>(initialTracks);
+export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: AgendaManagementProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AgendaItem | null>(null);
   const [editingTrack, setEditingTrack] = useState<AgendaTrack | null>(null);
   const { toast } = useToast();
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<TrackFormValues>({
+  const form = useForm<TrackFormValues>({
     resolver: zodResolver(TrackSchema),
+    defaultValues: { name: '', order: 100 }
   });
+  
+  const safeTracks = Array.isArray(tracks) ? tracks : [];
+  const safeAgendaItems = Array.isArray(agendaItems) ? agendaItems : [];
+  
+  useEffect(() => {
+    if (editingTrack) {
+        form.reset({ name: editingTrack.name, order: editingTrack.order ?? 100 });
+    } else {
+        const nextOrder = safeTracks.length > 0 ? Math.max(...safeTracks.map(t => t.order || 0)) + 10 : 10;
+        form.reset({ name: '', order: nextOrder });
+    }
+  }, [editingTrack, form, safeTracks]);
 
-  const handleRefresh = async () => {
-    const [items, newTracks] = await Promise.all([getAgenda(), getAgendaTracks()]);
-    setAgendaItems(items);
-    setTracks(newTracks);
-  };
 
   const handleAdd = () => {
     setSelectedItem(null);
@@ -202,7 +283,7 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
     const result = await deleteAgendaItem(id, token);
     if (result.success) {
       toast({ title: 'Success', description: 'Agenda item deleted.' });
-      handleRefresh();
+      onRefresh();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
@@ -211,15 +292,18 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
   const onManageTrack = async (data: TrackFormValues) => {
     const formData = new FormData();
     formData.append('name', data.name);
+    if (data.order !== undefined) {
+      formData.append('order', data.order.toString());
+    }
     if (editingTrack?.id) {
         formData.append('id', editingTrack.id);
     }
     const result = await manageAgendaTrack(formData, token);
     if (result.success) {
         toast({ title: 'Success', description: `Track ${editingTrack ? 'updated' : 'created'}.` });
-        reset({ name: '' });
+        form.reset({ name: '', order: 100 });
         setEditingTrack(null);
-        handleRefresh();
+        onRefresh();
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
@@ -229,7 +313,7 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
     const result = await deleteAgendaTrack(id, token);
     if (result.success) {
         toast({ title: 'Success', description: 'Track deleted.' });
-        handleRefresh();
+        onRefresh();
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
@@ -237,25 +321,25 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
 
   const handleEditTrack = (track: AgendaTrack) => {
     setEditingTrack(track);
-    reset({ name: track.name });
   }
 
   const groupedItems = useMemo(() => {
-    const groups: { [key: string]: AgendaItem[] } = {};
-    agendaItems.forEach(item => {
-        const trackKey = item.trackName || 'Unassigned';
-        if (!groups[trackKey]) {
-            groups[trackKey] = [];
-        }
-        groups[trackKey].push(item);
-    });
+    const sortedTracks = [...safeTracks].sort((a,b) => (a.order ?? 999) - (b.order ?? 999));
+    
+    const groups = sortedTracks.map(track => ({
+      ...track,
+      items: safeAgendaItems.filter(item => item.trackId === track.id).sort((a,b) => a.startTime.localeCompare(b.startTime))
+    }));
+    
+    const unassignedItems = safeAgendaItems.filter(item => !item.trackId || !safeTracks.some(t => t.id === item.trackId))
+      .sort((a,b) => a.startTime.localeCompare(b.startTime));
 
-    Object.values(groups).forEach(group => {
-        group.sort((a, b) => a.startTime.localeCompare(b.startTime));
-    });
-
-    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [agendaItems]);
+    if (unassignedItems.length > 0) {
+      groups.push({ id: 'unassigned', name: 'Unassigned', order: 9999, items: unassignedItems });
+    }
+    
+    return groups;
+  }, [safeAgendaItems, safeTracks]);
 
 
   return (
@@ -266,11 +350,11 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
             <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button>
         </div>
         
-        {groupedItems.length > 0 ? (
-            groupedItems.map(([trackName, items]) => (
-                <Card key={trackName}>
+        {groupedItems.length > 0 && groupedItems.some(g => g.items.length > 0) ? (
+            groupedItems.map((group) => group.items.length > 0 && (
+                <Card key={group.id}>
                     <CardHeader>
-                        <CardTitle>{trackName}</CardTitle>
+                        <CardTitle>{group.name}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="rounded-lg border">
@@ -284,7 +368,9 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {items.map((item) => (
+                                    {group.items.map((item) => {
+                                        const difficulties = Array.isArray(item.difficulty) ? item.difficulty : (item.difficulty ? [item.difficulty] : []);
+                                        return (
                                         <TableRow key={item.id}>
                                             <TableCell>
                                                 <Badge variant="outline" className="flex items-center gap-1.5 whitespace-nowrap">
@@ -293,7 +379,10 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
                                             </TableCell>
                                             <TableCell>
                                               <div className="font-medium">{item.title}</div>
-                                              {item.category && <Badge variant="secondary" className="mt-1">{item.category}</Badge>}
+                                              <div className="flex flex-wrap items-center gap-1 mt-1">
+                                                {item.category && <Badge variant="secondary">{item.category}</Badge>}
+                                                {difficulties.map(d => <DifficultyBadge key={d} difficulty={d} />)}
+                                              </div>
                                             </TableCell>
                                             <TableCell>{item.speaker || 'N/A'}</TableCell>
                                             <TableCell className="text-right">
@@ -318,7 +407,7 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
                                                 </AlertDialog>
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )})}
                                 </TableBody>
                             </Table>
                         </div>
@@ -337,18 +426,24 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
             <CardTitle>{editingTrack ? 'Edit Track' : 'Manage Tracks'}</CardTitle>
         </CardHeader>
         <CardContent>
-            <form onSubmit={handleSubmit(onManageTrack)} className="flex items-start gap-2 mb-4">
-                <div className="flex-grow">
-                    <Input placeholder="Track name..." {...register('name')} />
-                    {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
-                </div>
-                <Button type="submit">{editingTrack ? 'Save' : 'Add'}</Button>
-                {editingTrack && <Button type="button" variant="ghost" onClick={() => { setEditingTrack(null); reset({name: ''});}}>Cancel</Button>}
-            </form>
-            <div className="space-y-2">
-                {tracks.map(track => (
-                    <div key={track.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
-                        <span className="text-sm font-medium">{track.name}</span>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onManageTrack)} className="space-y-4">
+                    <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Track Name</FormLabel><FormControl><Input placeholder="e.g., Main Stage" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={form.control} name="order" render={({ field }) => ( <FormItem><FormLabel>Display Order</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <div className="flex gap-2">
+                        <Button type="submit" disabled={form.formState.isSubmitting}>{editingTrack ? 'Save Changes' : 'Add Track'}</Button>
+                        {editingTrack && <Button type="button" variant="ghost" onClick={() => { setEditingTrack(null); }}>Cancel</Button>}
+                    </div>
+                </form>
+            </Form>
+            <div className="space-y-2 mt-6">
+                 <h3 className="text-sm font-medium text-muted-foreground">Existing Tracks</h3>
+                {[...safeTracks].sort((a,b) => (a.order ?? 999) - (b.order ?? 999)).map(track => (
+                    <div key={track.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground w-6 text-center">{track.order}</span>
+                            <span className="text-sm font-medium">{track.name}</span>
+                        </div>
                         <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" onClick={() => handleEditTrack(track)}>
                                 <Pencil className="h-4 w-4" />
@@ -373,7 +468,7 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
                         </div>
                     </div>
                 ))}
-                 {tracks.length === 0 && (
+                 {safeTracks.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">No tracks created.</p>
                 )}
             </div>
@@ -385,9 +480,9 @@ export function AgendaManagement({ initialAgendaItems, initialTracks, token }: A
           isOpen={isFormOpen}
           setIsOpen={setIsFormOpen}
           item={selectedItem}
-          tracks={tracks}
+          tracks={safeTracks}
           token={token}
-          onSave={handleRefresh}
+          onSave={onRefresh}
         />
       )}
     </div>
