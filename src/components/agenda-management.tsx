@@ -22,8 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AgendaManagementProps {
-  initialAgenda: AgendaItem[];
-  initialTracks: AgendaTrack[];
+  agendaItems: AgendaItem[];
+  tracks: AgendaTrack[];
   token: string;
   onRefresh: () => void;
 }
@@ -185,32 +185,28 @@ const TrackSchema = z.object({
 });
 type TrackFormValues = z.infer<typeof TrackSchema>;
 
-export function AgendaManagement({ initialAgenda, initialTracks, token, onRefresh }: AgendaManagementProps) {
-  const [agendaItems, setAgendaItems] = useState<AgendaItem[]>(initialAgenda);
-  const [tracks, setTracks] = useState<AgendaTrack[]>(initialTracks);
+export function AgendaManagement({ agendaItems, tracks, token, onRefresh }: AgendaManagementProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AgendaItem | null>(null);
   const [editingTrack, setEditingTrack] = useState<AgendaTrack | null>(null);
   const { toast } = useToast();
   
-  useEffect(() => {
-    setAgendaItems(initialAgenda);
-    setTracks(initialTracks);
-  }, [initialAgenda, initialTracks]);
-
   const form = useForm<TrackFormValues>({
     resolver: zodResolver(TrackSchema),
     defaultValues: { name: '', order: 100 }
   });
   
+  const safeTracks = Array.isArray(tracks) ? tracks : [];
+  const safeAgendaItems = Array.isArray(agendaItems) ? agendaItems : [];
+  
   useEffect(() => {
     if (editingTrack) {
         form.reset({ name: editingTrack.name, order: editingTrack.order ?? 100 });
     } else {
-        const nextOrder = tracks.length > 0 ? Math.max(...tracks.map(t => t.order || 0)) + 10 : 10;
+        const nextOrder = safeTracks.length > 0 ? Math.max(...safeTracks.map(t => t.order || 0)) + 10 : 10;
         form.reset({ name: '', order: nextOrder });
     }
-  }, [editingTrack, form, tracks]);
+  }, [editingTrack, form, safeTracks]);
 
 
   const handleAdd = () => {
@@ -268,22 +264,22 @@ export function AgendaManagement({ initialAgenda, initialTracks, token, onRefres
   }
 
   const groupedItems = useMemo(() => {
-    const sortedTracks = [...tracks].sort((a,b) => (a.order ?? 999) - (b.order ?? 999));
+    const sortedTracks = [...safeTracks].sort((a,b) => (a.order ?? 999) - (b.order ?? 999));
     
     const groups = sortedTracks.map(track => ({
       ...track,
-      items: agendaItems.filter(item => item.trackId === track.id).sort((a,b) => a.startTime.localeCompare(b.startTime))
+      items: safeAgendaItems.filter(item => item.trackId === track.id).sort((a,b) => a.startTime.localeCompare(b.startTime))
     }));
     
-    const unassignedItems = agendaItems.filter(item => !item.trackId || !tracks.some(t => t.id === item.trackId))
+    const unassignedItems = safeAgendaItems.filter(item => !item.trackId || !safeTracks.some(t => t.id === item.trackId))
       .sort((a,b) => a.startTime.localeCompare(b.startTime));
 
     if (unassignedItems.length > 0) {
-      groups.push({ id: 'unassigned', name: 'Unassigned', items: unassignedItems });
+      groups.push({ id: 'unassigned', name: 'Unassigned', order: 9999, items: unassignedItems });
     }
     
     return groups;
-  }, [agendaItems, tracks]);
+  }, [safeAgendaItems, safeTracks]);
 
 
   return (
@@ -377,7 +373,7 @@ export function AgendaManagement({ initialAgenda, initialTracks, token, onRefres
             </Form>
             <div className="space-y-2 mt-6">
                  <h3 className="text-sm font-medium text-muted-foreground">Existing Tracks</h3>
-                {[...tracks].sort((a,b) => (a.order ?? 999) - (b.order ?? 999)).map(track => (
+                {[...safeTracks].sort((a,b) => (a.order ?? 999) - (b.order ?? 999)).map(track => (
                     <div key={track.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground w-6 text-center">{track.order}</span>
@@ -407,7 +403,7 @@ export function AgendaManagement({ initialAgenda, initialTracks, token, onRefres
                         </div>
                     </div>
                 ))}
-                 {tracks.length === 0 && (
+                 {safeTracks.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">No tracks created.</p>
                 )}
             </div>
@@ -419,7 +415,7 @@ export function AgendaManagement({ initialAgenda, initialTracks, token, onRefres
           isOpen={isFormOpen}
           setIsOpen={setIsFormOpen}
           item={selectedItem}
-          tracks={tracks}
+          tracks={safeTracks}
           token={token}
           onSave={onRefresh}
         />
