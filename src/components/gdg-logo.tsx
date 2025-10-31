@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useTheme } from 'next-themes';
@@ -13,15 +12,15 @@ export function GDGVizagLogo(props: Omit<ImageProps, 'src' | 'alt' | 'width' | '
     setMounted(true);
   }, []);
 
+  const logoSrc = resolvedTheme === 'dark' 
+    ? '/images/logo-dark-transparent.svg' 
+    : '/images/logo-light-transparent.svg';
+
+  // On initial server render, or if not mounted yet, we can render a placeholder
+  // or a default logo to avoid hydration issues. A simple div that takes up the space is fine.
   if (!mounted) {
-    // To prevent a hydration mismatch and the wrong logo flashing,
-    // we render a placeholder that respects the passed className,
-    // which should define its size.
     return <div className={props.className} />;
   }
-
-  const isDark = resolvedTheme === 'dark';
-  const logoSrc = isDark ? '/images/logo-dark-transparent.svg' : '/images/logo-light-transparent.svg';
 
   return (
     <Image 
