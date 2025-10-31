@@ -4,9 +4,6 @@ import { useTheme } from 'next-themes';
 import Image, { type ImageProps } from 'next/image';
 import { useEffect, useState } from 'react';
 
-// This component assumes you have moved the logo files to the `public/images` directory.
-// For example: `public/images/logo-dark.svg` and `public/images/logo-light.svg`
-
 export function DevFestLogo(props: Omit<ImageProps, 'src' | 'alt' | 'width' | 'height'>) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -15,15 +12,25 @@ export function DevFestLogo(props: Omit<ImageProps, 'src' | 'alt' | 'width' | 'h
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    // To prevent a hydration mismatch and the wrong logo flashing,
-    // we render a placeholder that respects the passed className,
-    // which should define its size.
-    return <div className={props.className} />;
-  }
+  // To prevent hydration mismatch, we can't rely on the theme on the server.
+  // We'll render a placeholder or the light theme logo by default.
+  // The correct logo will show up on the client after mounting.
+  const logoSrc = mounted && resolvedTheme === 'dark' 
+    ? '/images/logo-dark.svg' 
+    : '/images/logo-light.svg';
 
-  const isDark = resolvedTheme === 'dark';
-  const logoSrc = isDark ? '/images/logo-dark.svg' : '/images/logo-light.svg';
+  if (!mounted) {
+    // Render a simple placeholder that occupies space, but could also be the light logo.
+    return (
+       <Image 
+        src="/images/logo-light.svg" 
+        alt="DevFest Vizag Logo" 
+        width={2000}
+        height={300}
+        {...props} 
+      />
+    );
+  }
 
   return (
     <Image 

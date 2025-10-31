@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Twitter, Linkedin, Youtube } from 'lucide-react'
 import config from '@/config.json'
-import { GDGVizagLogo } from './gdg-logo'
+import { DevFestLogo } from './logo'
 
 export function Footer() {
   return (
@@ -9,7 +9,7 @@ export function Footer() {
       <div className="container mx-auto py-8 px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2 grid grid-cols-3 md:grid-cols-3 gap-8">
-            <GDGVizagLogo className="h-32 w-auto" />
+            <DevFestLogo className="h-32 w-auto" />
             <div className="grid gap-2 content-start">
               <h3 className="text-sm font-semibold">Navigation</h3>
               {config.navigation.home && <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">Home</Link>}

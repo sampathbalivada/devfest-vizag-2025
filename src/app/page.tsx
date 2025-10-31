@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Instagram, Users, Calendar, MapPin, Ticket, BookOpen, ArrowUpRight } from "lucide-react";
+import { Instagram, Users, Calendar, MapPin, BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -11,27 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import config from '@/config.json';
 import { Sponsors } from "@/components/sponsors";
 import { AnnouncementBanner } from "@/components/announcement-banner";
-import { GDGVizagLogo } from "@/components/gdg-logo";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { DevFestLogo } from "@/components/logo";
 import { StatsSection } from "@/components/stats-section";
 import { AgendaPromoSection } from "@/components/agenda-promo-section";
 import { WorkshopsSection } from "@/components/workshops-section";
 import { LiveAgendaSection } from "@/components/live-agenda-section";
-
-const timelines = [
-  { event: "Early Bird Registration", date: "October 14" },
-  { event: "General Entry Tickets", date: "October 15th - 31st October" },
-  { event: "Workshop Agenda Release", date: "1st October" },
-  { event: "Final Agenda & Speaker List Release", date: "1 week before event" }
-];
 
 
 export default function Home() {
@@ -66,7 +50,7 @@ export default function Home() {
         </div>
         <div className="relative z-10 flex flex-col items-center justify-center p-4 text-center pt-16 pb-12">
           
-          <GDGVizagLogo className="h-16 md:h-24 w-auto mb-6" />
+          <DevFestLogo className="h-16 md:h-24 w-auto mb-6" />
 
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Join us for the largest developer conference in Visakhapatnam, featuring expert speakers, hands-on workshops, and networking opportunities with the best in tech.
