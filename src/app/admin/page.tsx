@@ -6,10 +6,11 @@ import { auth } from '@/lib/firebase';
 import { getJobs, isAdmin, getApplications, getAdmins } from "@/app/volunteer/actions";
 import { getAgenda, getAgendaTracks } from '@/app/agenda/actions';
 import { getAnnouncements } from '@/app/announcements/actions';
+import { getSiteSettings } from '@/app/settings/actions';
 import AdminDashboard from "@/components/admin-dashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Terminal } from "lucide-react";
-import type { Job, ClientJobApplication, AdminUser, AgendaItem, AgendaTrack, Announcement } from '@/types';
+import type { Job, ClientJobApplication, AdminUser, AgendaItem, AgendaTrack, Announcement, SiteSettings } from '@/types';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -28,6 +29,7 @@ export default function AdminPage() {
   const [agenda, setAgenda] = useState<AgendaItem[]>([]);
   const [agendaTracks, setAgendaTracks] = useState<AgendaTrack[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchData = async (idToken: string) => {
@@ -38,14 +40,16 @@ export default function AdminPage() {
         initialAdminsData, 
         initialAgendaData,
         initialAgendaTracksData,
-        initialAnnouncementsData
+        initialAnnouncementsData,
+        initialSettingsData
       ] = await Promise.all([
         getJobs(),
         getApplications(idToken, { status: 'All', jobTitle: 'All' }, { limit: ITEMS_PER_PAGE }),
         getAdmins(idToken),
         getAgenda(),
         getAgendaTracks(),
-        getAnnouncements()
+        getAnnouncements(),
+        getSiteSettings()
       ]);
       setJobs(initialJobs);
       setApplications(initialApplicationsData.applications);
@@ -58,6 +62,7 @@ export default function AdminPage() {
       setAgenda(initialAgendaData);
       setAgendaTracks(initialAgendaTracksData);
       setAnnouncements(initialAnnouncementsData);
+      setSettings(initialSettingsData);
     } catch (error) {
        console.error("Error fetching admin data:", error);
        setStatus({ isLoading: false, isAuthorized: false, token: '', uid: '' });
@@ -94,7 +99,7 @@ export default function AdminPage() {
     setRefreshKey(prev => prev + 1);
   }
 
-  if (status.isLoading) {
+  if (status.isLoading || !settings) {
     return (
       <div className="container mx-auto py-12 px-4 flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -134,6 +139,7 @@ export default function AdminPage() {
         initialAgenda={agenda}
         initialAgendaTracks={agendaTracks}
         initialAnnouncements={announcements}
+        initialSettings={settings}
         currentUserUid={status.uid}
         token={status.token}
         onDataRefresh={handleDataRefresh}

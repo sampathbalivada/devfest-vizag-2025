@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Job, ClientJobApplication, AdminUser, AgendaItem, AgendaTrack, Announcement } from '@/types';
+import type { Job, ClientJobApplication, AdminUser, AgendaItem, AgendaTrack, Announcement, SiteSettings } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { AdminManagement } from './admin-management';
 import { AgendaManagement } from './agenda-management';
 import { AnnouncementManagement } from './announcement-management';
+import { SettingsManagement } from './settings-management';
 
 
 interface AdminDashboardProps {
@@ -32,6 +33,7 @@ interface AdminDashboardProps {
   initialAgenda: AgendaItem[];
   initialAgendaTracks: AgendaTrack[];
   initialAnnouncements: Announcement[];
+  initialSettings: SiteSettings;
   currentUserUid: string;
   token: string;
   onDataRefresh: () => void;
@@ -45,6 +47,7 @@ export default function AdminDashboard({
   initialAgenda,
   initialAgendaTracks,
   initialAnnouncements,
+  initialSettings,
   currentUserUid, 
   token,
   onDataRefresh,
@@ -93,12 +96,13 @@ export default function AdminDashboard({
 
   return (
      <Tabs defaultValue="applications" className="w-full">
-      <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5">
+      <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-6">
         <TabsTrigger value="applications">Applications</TabsTrigger>
         <TabsTrigger value="jobs">Job Postings</TabsTrigger>
         <TabsTrigger value="agenda">Agenda</TabsTrigger>
         <TabsTrigger value="announcements">Announcements</TabsTrigger>
         <TabsTrigger value="admins">Admins</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
       <TabsContent value="applications" className="mt-6">
         <ApplicationsList 
@@ -222,6 +226,13 @@ export default function AdminDashboard({
           initialAdmins={initialAdmins}
           token={token}
           currentUserUid={currentUserUid}
+          onRefresh={onDataRefresh}
+        />
+      </TabsContent>
+       <TabsContent value="settings" className="mt-6">
+        <SettingsManagement
+          initialSettings={initialSettings}
+          token={token}
           onRefresh={onDataRefresh}
         />
       </TabsContent>
