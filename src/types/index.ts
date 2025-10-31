@@ -100,3 +100,7 @@ export interface Announcement {
   content: string;
   createdAt: string; // ISO string date
 }
+
+export interface SiteSettings {
+  showLiveAgenda: boolean;
+}

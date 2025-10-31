@@ -21,7 +21,7 @@ export function GDGVizagLogo(props: Omit<ImageProps, 'src' | 'alt' | 'width' | '
   }
 
   const isDark = resolvedTheme === 'dark';
-  const logoSrc = isDark ? '/images/gdg-vizag-stack-dark.svg' : '/images/gdg-vizag-stack-light.svg';
+  const logoSrc = isDark ? '/images/logo-dark-transparent.svg' : '/images/logo-light-transparent.svg';
 
   return (
     <Image 

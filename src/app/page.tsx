@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import config from '@/config.json';
 import { Sponsors } from "@/components/sponsors";
 import { AnnouncementBanner } from "@/components/announcement-banner";
-import { DevFestLogo } from "@/components/logo";
+import { GDGVizagLogo } from "@/components/gdg-logo";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -24,6 +24,7 @@ import {
 import { StatsSection } from "@/components/stats-section";
 import { AgendaPromoSection } from "@/components/agenda-promo-section";
 import { WorkshopsSection } from "@/components/workshops-section";
+import { LiveAgendaSection } from "@/components/live-agenda-section";
 
 const timelines = [
   { event: "Early Bird Registration", date: "October 14" },
@@ -65,7 +66,7 @@ export default function Home() {
         </div>
         <div className="relative z-10 flex flex-col items-center justify-center p-4 text-center pt-16 pb-12">
           
-          <DevFestLogo className="h-12 md:h-16 w-auto mb-6" />
+          <GDGVizagLogo className="h-12 md:h-16 w-auto mb-6" />
 
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Join us for the largest developer conference in Visakhapatnam, featuring expert speakers, hands-on workshops, and networking opportunities with the best in tech.
@@ -116,6 +117,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+      
+      <LiveAgendaSection />
       
       <StatsSection />
 
